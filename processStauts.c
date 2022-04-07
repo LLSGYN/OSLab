@@ -43,19 +43,19 @@ void showSingleProcess(int pid)
             printf("createProcess  time: %d  needRAM: %d\n", event.time, event.needRAM);
             break;
           case proReadMem:
-            printf("proReadMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum, event.needRAM);
+            printf("proReadMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum);
             break;
           case proWriteMem:
-            printf("proWriteMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum, event.needRAM);
+            printf("proWriteMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum);
             break;
           case heapAlloc:
-            printf("heapAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.eventMsg.allocNum, event.needRAM);
+            printf("heapAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.allocNum);
             break;
           case stackAlloc:
-            printf("stackAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.eventMsg.allocNum, event.needRAM);
+            printf("stackAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.allocNum);
             break;
           case compile:
-            printf("compile  time: %d  needRAM: %d  fileName: %s\n", event.time, event.eventMsg.filename, event.needRAM);
+            printf("compile  time: %d  needRAM: %d  fileName: %s\n", event.time, event.needRAM, event.eventMsg.filename);
             break;
           default:
             printf("event type error!\n");
