@@ -1,10 +1,10 @@
 #include "createProcess.h"
 
-//µÃµ½ÏÂÒ»¸ö¿ÉÓÃµÄ½ø³ÌID
+//å¾—åˆ°ä¸‹ä¸€ä¸ªå¯ç”¨çš„è¿›ç¨‹ID
 int GetNextUnusedProcessID()
 {
 	int nxtID = -1;
-	WaitForSingleObject(usedProcessIDMutex, INFINITE);//Ëø×¡ÏÂÃæµÄÊı×é£¬·ÀÖ¹±»¶à¸ö½ø³ÌÍ¬Ê±·ÃÎÊÔì³É²»Í¬²½µÄÎÊÌâ
+	WaitForSingleObject(usedProcessIDMutex, INFINITE);//é”ä½ä¸‹é¢çš„æ•°ç»„ï¼Œé˜²æ­¢è¢«å¤šä¸ªè¿›ç¨‹åŒæ—¶è®¿é—®é€ æˆä¸åŒæ­¥çš„é—®é¢˜
 	for (int i = 0; i < MAX_PROCESS; i++)
 	{
 		if (usedProcessID[i] == 0)
@@ -14,93 +14,93 @@ int GetNextUnusedProcessID()
 			break;
 		}
 	}
-	ReleaseSemaphore(usedProcessIDMutex, 1, NULL);//ÊÍ·Å¸ÃËø
+	ReleaseSemaphore(usedProcessIDMutex, 1, NULL);//é‡Šæ”¾è¯¥é”
 	return nxtID;
 }
 
-int CreateMyProcess(char* processName, int fatherProcessID)//´´½¨ÓÃ»§½ø³Ì
+int CreateMyProcess(char* processName, int fatherProcessID)//åˆ›å»ºç”¨æˆ·è¿›ç¨‹
 {
-	int nowID = GetNextUnusedProcessID();//»ñÈ¡½ø³ÌID
-	if (nowID == -1)//»ñÈ¡IDºÅÊ§°Ü
+	int nowID = GetNextUnusedProcessID();//è·å–è¿›ç¨‹ID
+	if (nowID == -1)//è·å–IDå·å¤±è´¥
 	{
 		printf("Fail to create new process...\n");
 		return 0;
 	}
-	processCNT++;//½ø³Ì×ÜÊı¼ÓÒ»
+	processCNT++;//è¿›ç¨‹æ€»æ•°åŠ ä¸€
 	printf("**********process totol count is %d\n", processCNT);
 	for (int i = 0; i < MAX_NAME; i++)
-		allPCB[nowID].name[i] = processName[i];//ĞÂ½ø³ÌÃû×Ö
-	allPCB[nowID].ID = nowID;//ĞÂ½ø³ÌID
+		allPCB[nowID].name[i] = processName[i];//æ–°è¿›ç¨‹åå­—
+	allPCB[nowID].ID = nowID;//æ–°è¿›ç¨‹ID
 	allPCB[nowID].fatherProID = fatherProcessID;
 	if (fatherProcessID != -1)
-		allPCB[nowID].sonPro = 1;//¸Ã½ø³ÌÊÇ×Ó½ø³Ì
+		allPCB[nowID].sonPro = 1;//è¯¥è¿›ç¨‹æ˜¯å­è¿›ç¨‹
 
 	if (CPUMode == 0 || CPUMode == 2)//FCFS RR
-		allPCB[nowID].priority = 0;//¹Ì¶¨µÄÓÅÏÈ¼¶
-	else//·ÇÇÀÕ¼µÄ¾²Ì¬ÓÅÏÈ¼¶
-		allPCB[nowID].priority = rand() % (PRIORITY_NUM - 1);//Ëæ»úµÄÒ»¸öÓÅÏÈ¼¶
+		allPCB[nowID].priority = 0;//å›ºå®šçš„ä¼˜å…ˆçº§
+	else//éæŠ¢å çš„é™æ€ä¼˜å…ˆçº§
+		allPCB[nowID].priority = rand() % (PRIORITY_NUM - 1);//éšæœºçš„ä¸€ä¸ªä¼˜å…ˆçº§
 
 	allPCB[nowID].eventID = 0;
 	allPCB[nowID].eventTime = 0;
 
-	allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//Ëæ»úÉú³ÉÉêÇëµÄÄÚ´æÒ³Êı ×îĞ¡Îª3
-	//µ÷ÓÃ½Ó¿Úº¯ÊıÏòÄÚ´æÄ£¿éÉêÇëÄÚ´æ
+	allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//éšæœºç”Ÿæˆç”³è¯·çš„å†…å­˜é¡µæ•° æœ€å°ä¸º3
+	//è°ƒç”¨æ¥å£å‡½æ•°å‘å†…å­˜æ¨¡å—ç”³è¯·å†…å­˜
 	//********************
 	//********************
-	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //µ÷ÓÃ½Ó¿Úº¯ÊıÏòÄÚ´æÄ£¿éÉêÇëÄÚ´æ
-	allPCB[nowID].eventNum = rand() % 1 + 1;//Ëæ»úÉú³ÉÊÂ¼ş×ÜÊı ************************** rand() % MAX_EVENT
+	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //è°ƒç”¨æ¥å£å‡½æ•°å‘å†…å­˜æ¨¡å—ç”³è¯·å†…å­˜
+	allPCB[nowID].eventNum = rand() % 1 + 1;//éšæœºç”Ÿæˆäº‹ä»¶æ€»æ•° ************************** rand() % MAX_EVENT
 	printf("*************event total num is %d\n", allPCB[nowID].eventNum);
-	int mem_cnt = 0;//±»Õ¼ÓÃµÄÄÚ´æÒ³Êı
+	int mem_cnt = 0;//è¢«å ç”¨çš„å†…å­˜é¡µæ•°
 	for (int i = 0; i < allPCB[nowID].eventNum; i++)
 	{
 		if (i == 0)
-			allPCB[nowID].events[i].eventType = occupyCPU;//µÚÒ»¸öÊÂ¼ş×ÜÊÇÈ¥Ê¹ÓÃCPU
+			allPCB[nowID].events[i].eventType = occupyCPU;//ç¬¬ä¸€ä¸ªäº‹ä»¶æ€»æ˜¯å»ä½¿ç”¨CPU
 		else
-			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//ÊÂ¼şÀàĞÍËæ»ú£¬²»º¬±àÒëÀàĞÍÊÂ¼ş
+			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//äº‹ä»¶ç±»å‹éšæœºï¼Œä¸å«ç¼–è¯‘ç±»å‹äº‹ä»¶
 		
 		printf("*******eventType is %d\n", allPCB[nowID].events[i].eventType);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
-			allPCB[nowID].events[i].eventType = occupyCPU;//½«×Ó½ø³ÌµÄ´´½¨½ø³ÌÊÂ¼şÊÓÎªÌØÊâµÄÕ¼ÓÃCPUµÄÊÂ¼ş
+			allPCB[nowID].events[i].eventType = occupyCPU;//å°†å­è¿›ç¨‹çš„åˆ›å»ºè¿›ç¨‹äº‹ä»¶è§†ä¸ºç‰¹æ®Šçš„å ç”¨CPUçš„äº‹ä»¶
 		
-		if(allPCB[nowID].events[i].eventType == createProcess)//µ±Ç°ÊÂ¼şÎª´´½¨½ø³ÌÊÂ¼ş
-			allPCB[nowID].events[i].time = CREATE_PROCESS_TIME;//ÉèÖÃ¸ÃÊÂ¼şĞèÒªµÄÊ±¼äÆ¬
-		else if (allPCB[nowID].events[i].eventType == occupyIO)//Õ¼ÓÃIOÊÂ¼ş
+		if(allPCB[nowID].events[i].eventType == createProcess)//å½“å‰äº‹ä»¶ä¸ºåˆ›å»ºè¿›ç¨‹äº‹ä»¶
+			allPCB[nowID].events[i].time = CREATE_PROCESS_TIME;//è®¾ç½®è¯¥äº‹ä»¶éœ€è¦çš„æ—¶é—´ç‰‡
+		else if (allPCB[nowID].events[i].eventType == occupyIO)//å ç”¨IOäº‹ä»¶
 		{
-			allPCB[nowID].events[i].eventMsg.IDOfIO = rand() % IO_NUM;//·ÖÅäIOºÅ
+			allPCB[nowID].events[i].eventMsg.IDOfIO = rand() % IO_NUM;//åˆ†é…IOå·
 			printf("************alloc IO_num is %d...\n", allPCB[nowID].events[i].eventMsg.IDOfIO);
-			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //ÊÂ¼şËùĞèÊ±¼äÆ¬ÊıËæ»ú
+			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //äº‹ä»¶æ‰€éœ€æ—¶é—´ç‰‡æ•°éšæœº
 		}
-		else if (allPCB[nowID].events[i].eventType == heapAlloc || allPCB[nowID].events[i].eventType == stackAlloc)//ÉêÇë¶ÑÕ»ÊÂ¼ş
+		else if (allPCB[nowID].events[i].eventType == heapAlloc || allPCB[nowID].events[i].eventType == stackAlloc)//ç”³è¯·å †æ ˆäº‹ä»¶
 		{
-			int getMem = rand() % 100;//ÊÂ¼şĞèÒªÄÚ´æµÄ¸ÅÂÊ Ğ¡ÓÚMAX_NEED_MEMORYÔòĞèÒª
-			if (getMem < NEED_MEMORY_PERCENT && mem_cnt < allPCB[nowID].pageNum)//ĞèÒªÄÚ´æ ¶øÇÒ ÄÚ´æÃ»±»·ÖÅäÍê
+			int getMem = rand() % 100;//äº‹ä»¶éœ€è¦å†…å­˜çš„æ¦‚ç‡ å°äºMAX_NEED_MEMORYåˆ™éœ€è¦
+			if (getMem < NEED_MEMORY_PERCENT && mem_cnt < allPCB[nowID].pageNum)//éœ€è¦å†…å­˜ è€Œä¸” å†…å­˜æ²¡è¢«åˆ†é…å®Œ
 			{
-				allPCB[nowID].events[i].needRAM = rand() % (allPCB[nowID].pageNum - mem_cnt) + 1;//Ëæ»ú»ñµÃÄÚ´æ´óĞ¡£¨µ¥Î»£ºÒ³
-				mem_cnt = mem_cnt + allPCB[nowID].events[i].needRAM;//±»Õ¼ÓÃµÄÄÚ´æÒ³ÊıÔö¼Ó
+				allPCB[nowID].events[i].needRAM = rand() % (allPCB[nowID].pageNum - mem_cnt) + 1;//éšæœºè·å¾—å†…å­˜å¤§å°ï¼ˆå•ä½ï¼šé¡µ
+				mem_cnt = mem_cnt + allPCB[nowID].events[i].needRAM;//è¢«å ç”¨çš„å†…å­˜é¡µæ•°å¢åŠ 
 			}
 			else
-				allPCB[nowID].events[i].needRAM = 0;//²»ĞèÒªÄÚ´æ
-			allPCB[nowID].events[i].time = MY_ALLOC_TIME;//ÉêÇë¶ÑÕ»ĞèÒªµÄÊ±¼äÆ¬
+				allPCB[nowID].events[i].needRAM = 0;//ä¸éœ€è¦å†…å­˜
+			allPCB[nowID].events[i].time = MY_ALLOC_TIME;//ç”³è¯·å †æ ˆéœ€è¦çš„æ—¶é—´ç‰‡
 		}
-		else if (allPCB[nowID].events[i].eventType == proReadMem || allPCB[nowID].events[i].eventType == proWriteMem)//¶ÁĞ´ÄÚ´æ
+		else if (allPCB[nowID].events[i].eventType == proReadMem || allPCB[nowID].events[i].eventType == proWriteMem)//è¯»å†™å†…å­˜
 		{
-			//Ëæ»úÉú³É¶ÁĞ´ÄÚ´æĞèÒªµÄÂß¼­Ò³ºÅ¡¢Æ«ÒÆÁ¿¡¢¶ÁĞ´×Ö·û´®³¤¶È
-			int start_page = rand() % allPCB[nowID].pageNum;//Âß¼­Ò³ºÅ
-			int offset = rand() % 1024;//Ò³ÄÚÆ«ÒÆÁ¿
-			int remainBytes = (allPCB[nowID].pageNum - start_page - 1) * 1024 + 1023 - offset;//Ê£Óà×Ö½Ú
-			int len = rand() % remainBytes + 1;//¶ÁĞ´µÄ³¤¶È
+			//éšæœºç”Ÿæˆè¯»å†™å†…å­˜éœ€è¦çš„é€»è¾‘é¡µå·ã€åç§»é‡ã€è¯»å†™å­—ç¬¦ä¸²é•¿åº¦
+			int start_page = rand() % allPCB[nowID].pageNum;//é€»è¾‘é¡µå·
+			int offset = rand() % 1024;//é¡µå†…åç§»é‡
+			int remainBytes = (allPCB[nowID].pageNum - start_page - 1) * 1024 + 1023 - offset;//å‰©ä½™å­—èŠ‚
+			int len = rand() % remainBytes + 1;//è¯»å†™çš„é•¿åº¦
 			allPCB[nowID].events[i].eventMsg.wrMsg.startPageID = start_page;
 			allPCB[nowID].events[i].eventMsg.wrMsg.offset = offset;
 			allPCB[nowID].events[i].eventMsg.wrMsg.len = len;
 			allPCB[nowID].events[i].time = (offset + len + 1024) / 1024 * TIME_PER_PAGE;
 		}
 		else//occupyCPU
-			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //ÊÂ¼şËùĞèÊ±¼äÆ¬ÊıËæ»ú
+			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //äº‹ä»¶æ‰€éœ€æ—¶é—´ç‰‡æ•°éšæœº
 		printf("**************this event needs %d time\n", allPCB[nowID].events[i].time);
 	}
 
 	allPCB[nowID].CPUtime = 0;
-	allPCB[nowID].startTime = time(NULL); //¼ÇÂ¼½ø³Ì´´½¨Ê±¼ä
+	allPCB[nowID].startTime = time(NULL); //è®°å½•è¿›ç¨‹åˆ›å»ºæ—¶é—´
 	allPCB[nowID].IOID = -1;              //
 	allPCB[nowID].heapUsed = 0;
 	allPCB[nowID].stackUsed = 0;
@@ -112,7 +112,135 @@ int CreateMyProcess(char* processName, int fatherProcessID)//´´½¨ÓÃ»§½ø³Ì
 
 int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFileName)
 {
+	srand(time(NULL));
+	FILE *processfile = fopen(processFileName, "r");
+	if (processfile == NULL) {
+		printf("Process file does not exist,please check it!\n")
+			return 0;
+	}
+	int Id = GetNextUnusedProcessID();
+	if (Id == -1) {
+		printf("Create process fail,sorry!");
+		return 0;
+	}
+	processCNT++;
+	for (int i = 0; i < MAX_NAME; i++)
+		allPCB[Id].name[i] = processName[i];
+	allPCB[Id].ID = Id;
+	allPCB[Id].fatherProID = fatherProcessID;
+	if (allPCB[Id].fatherProID != -1)
+		allPCB[Id].sonPro = 1;   //æ˜¯å­è¿›ç¨‹
+	if (CPUMode == 0 || CPUMode == 2)  //FCFS RR
+		allPCB[Id].priority = 0;  //å›ºå®šçš„ä¼˜å…ˆçº§
+	else  //éæŠ¢å çš„é™æ€ä¼˜å…ˆçº§
+		allPCB[Id].priority = rand() % (PRIORITY_NUM - 1);//éšæœºçš„ä¸€ä¸ªä¼˜å…ˆçº§
+	allPCB[Id].eventID = 0;
+	allPCB[Id].eventTime = 0;
 
+	fscanf(processfile, "%d", &allPCB[Id].eventNum);
+	if (allPCB[Id].eventNum > MAX_EVENT) {   //å¦‚æœäº‹ä»¶æ•°è¶…è¿‡æœ€å¤§é™åˆ¶,æŠ¥é”™åŒæ—¶é”€æ¯è¿›ç¨‹
+		printf("Create process %d failed,there are too many events!\n", Id);
+		//å°†ä¿¡æ¯æ‰“å°åˆ°æ—¥å¿—æ–‡ä»¶ä¸­ï¼Œè¿˜æœªå®ç°
+		usedProcessID[Id] = 0;
+		processCNT--;
+		fclose(processfile);
+		return 0;
+	}
+	for (int i = 0; i < allPCB[Id].eventNum; i++) {
+		fscanf(processfile, "%d %d %d", &allPCB[Id].event[i].eventType, &allPCB[Id].event[i].time, &allPCB[Id].event[i].needRAM);
+		if (i == 0) {  //ä¿è¯ç¬¬ä¸€ä¸ªäº‹ä»¶æ˜¯å ç”¨CPU
+			if (allPCB[Id].events[i].eventType != occupyCPU && allPCB[Id].events[i].eventType != createProcess) {
+				printf("Create process %d failed,the first event is wrong!\n", Id);
+				//å°†ä¿¡æ¯æ‰“å°åˆ°æ—¥å¿—æ–‡ä»¶ä¸­ï¼Œè¿˜æœªå®ç°
+				usedProcessID[Id] = 0;
+				processCNT--;
+				fclose(processfile);
+				return 0;
+			}
+			// åˆ†é…æ—¶é—´ç‰‡
+			if(allPCB[Id].events[i].eventType == occupyCPU)
+				allPCB[Id].events[i].time = rand() % MAX_NEED_TIME + 1; //äº‹ä»¶æ‰€éœ€æ—¶é—´ç‰‡æ•°éšæœº
+			if(allPCB[Id].events[i].eventType == createProcess)
+				allPCB[Id].events[i].time = CREATE_PROCESS_TIME;
+		}
+		else {
+			//è‹¥è¿›ç¨‹ç”³è¯·çš„æ—¶é—´æˆ–å†…å­˜è¶…å‡ºé™åˆ¶
+			if (allPCB[Id].events[i].time > MAX_NEED_TIME || allPCB[Id].events[i].needRAM > MAX_PAGE_NUM) {
+				printf("Create process %d failed,the process has too much time or memory!\n", Id);
+				//å°†ä¿¡æ¯æ‰“å°åˆ°æ—¥å¿—æ–‡ä»¶ä¸­ï¼Œè¿˜æœªå®ç°
+				usedProcessID[Id] = 0;
+				processCNT--;
+				fclose(processfile);
+				return 0;
+			}
+			//è‹¥è¿›ç¨‹äº‹ä»¶ä¸ºå ç”¨IOï¼Œä¿è¯å…¶åˆç†æ€§
+			if (allPCB[Id].events[i].eventType == occupyIO) { 
+				fscanf(processfile, "%d",&allPCB[Id].events[i].eventMsg.IDOfIO);
+				//ä¿è¯è¯¥äº‹ä»¶æ‰€ä½¿ç”¨çš„IOçš„åˆç†æ€§
+				if (allPCB[Id].events[i].eventMsg.IDOfIO >= IO_NUM) {
+					printf("Create process %d failed,the process uses illogical IO!\n", Id);
+					//å°†ä¿¡æ¯æ‰“å°åˆ°æ—¥å¿—æ–‡ä»¶ä¸­ï¼Œè¿˜æœªå®ç°
+					usedProcessID[Id] = 0;
+					processCNT--;
+					fclose(processfile);
+					return 0;
+				}
+				allPCB[Id].events[i].time = rand() % MAX_NEED_TIME + 1;
+			}
+			//è‹¥è¿›ç¨‹äº‹ä»¶ä¸ºè¯»å†™å†…å­˜ï¼Œä¿è¯å…¶åˆç†æ€§
+			else if (allPCB[Id].events[i].eventType == proReadMem || allPCB[Id].events[i].eventType == proWriteMem) {
+				int offset; //åç§»é‡
+				fscanf(processfile, "%d %d", &allPCB[Id].pageNum, &offset);
+				if (offset >= 1024) {  //ä¿è¯åç§»é‡ä¸º0-1023ä¹‹é—´
+					printf("Create process %d failed,offset too large.\n", Id);
+					//å°†æ‰“å°ä¿¡æ¯å†™å…¥åˆ°æ—¥å¿—æ–‡ä»¶ä¸­
+					usedProcessID[Id] = ;
+					processCNT--;
+					fclose(processfile);
+					return 0;
+				}
+				int start_page = rand() % allPCB[nowID].pageNum;//é€»è¾‘é¡µå·
+				int remainBytes = (allPCB[nowID].pageNum - start_page - 1) * 1024 + 1023 - offset;//å‰©ä½™å­—èŠ‚
+				int len = rand() % remainBytes + 1;//è¯»å†™çš„é•¿åº¦
+				allPCB[Id].events[i].eventMsg.wrMsg.startPageID = start_page;
+				allPCB[Id].events[i].eventMsg.wrMsg.offset = offset;
+				allPCB[Id].events[i].eventMsg.wrMsg.len = len;
+				allPCB[Id].events[i].time = (offset + len + 1024) / 1024 * TIME_PER_PAGE;
+			}
+			//è‹¥è¿›ç¨‹äº‹ä»¶ä¸ºç”³è¯·å †æ ˆï¼Œä¿è¯å…¶åˆç†æ€§
+			else if (allPCB[Id].events[i].eventType == heapAlloc || allPCB[Id].events[i].eventType == stackAlloc) {
+				fscanf(processfile, "%d", &allPCB[i].events[i].eventMsg.allocNum);  //è¯»å–é¡µæ•°
+				if (allPCB[Id].events[i].eventMsg.allocNum > MAX_PAGE_NUM) {
+					printf("Create process %d failed,apply too many pages", Id);  
+					//å°†æ‰“å°ä¿¡æ¯å†™å…¥åˆ°æ—¥å¿—æ–‡ä»¶ä¸­
+					usedProcessID[Id] = ;
+					processCNT--;
+					fclose(processfile);
+					return 0;
+				}
+				allPCB[Id].events[i].time = MY_ALLOC_TIME;
+			}
+			//è‹¥è¿›ç¨‹äº‹ä»¶ä¸ºç¼–è¯‘ï¼Œåˆ™åˆ é™¤è¯¥è¿›ç¨‹
+			else if (allPCB[Id].events[i].eventType == compile) {
+				printf("Create process %d failed,compile is not permissed.\n", Id);
+				//å°†æ‰“å°ä¿¡æ¯å†™å…¥åˆ°æ—¥å¿—æ–‡ä»¶ä¸­
+				usedProcessID[Id] = ;
+				processCNT--;
+				fclose(processfile);
+				return 0;
+			}
+		}
+	}
+	fclose(processfile);
+	allPCB[Id].CPUtime = 0;
+	allPCB[Id].startTime = time(NULL); //è®°å½•è¿›ç¨‹åˆ›å»ºæ—¶é—´
+	allPCB[Id].IOID = -1;              //
+	allPCB[Id].heapUsed = 0;
+	allPCB[Id].stackUsed = 0;
+	printf("----Process %d created...\n", Id);
+	AddProcessToQueue(&readyQueue, Id);
+	allPCB[nowID].nowState = ready;
+	return 1;
 }
 
 int CreateCompileProcess(char* fileName)
