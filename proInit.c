@@ -51,6 +51,9 @@ void InitSemaphore()
 	killQueueEmpty = CreateSemaphore(NULL, MAX_PROCESS, MAX_PROCESS, NULL);
 	killQueueFull = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 	killQueueMutex = CreateSemaphore(NULL, 1, 1, NULL);
+	readyQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
+	memoryQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
+	readyQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 	for (int i = 0; i < PRIORITY_NUM; i++)
 	{
 		readyQueue.queueMutex[i] = CreateSemaphore(NULL, 1, 1, NULL);
@@ -61,6 +64,7 @@ void InitSemaphore()
 		memoryQueue.queueEmpty[i] = CreateSemaphore(NULL, MAX_PROCESS, MAX_PROCESS, NULL);
 		memoryQueue.queueFull[i] = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 
+		waitIOQueue[i].totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 		for (int j = 0; j < IO_NUM; j++)
 		{
 			waitIOQueue[j].queueMutex[i] = CreateSemaphore(NULL, 1, 1, NULL);
@@ -75,6 +79,7 @@ void Init()
 	printf("virOS starts...\n");
 	printf("input CPU Mode:\n");
 	scanf("%d", &CPUMode);//初始化CPU调度方式
+	getchar();
 	InitPCB();
 	InitQueue();
 	InitSemaphore();

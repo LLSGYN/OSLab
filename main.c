@@ -2,6 +2,7 @@
 #include "proInit.h"
 #include "mytime.h"
 #include "CPU.h"
+#include "OSShell.h"
 #include "proMemory.h"
 #include "proIO.h"
 #include "killProcess.h"
@@ -13,7 +14,7 @@ int main()
 {
 	srand(time(NULL));
 	Init();//初始化
-	CreateMyProcess("init process", -1);//初始进程
+	// CreateMyProcess("init process", -1);//初始进程
 	HANDLE timeRunThread = CreateThread(NULL, 0, TimeRun, 0, 0, NULL);               //运行时间片模拟线程
 	HANDLE dispatchCPUThread = CreateThread(NULL, 0, DispatchCPU, 0, 0, NULL);       //CPU调度线程
 	HANDLE virCPUThread = CreateThread(NULL, 0, VirCPU, 0, 0, NULL);                 //CPU的模拟运行
@@ -21,8 +22,8 @@ int main()
 	HANDLE dispatchMemoryThread = CreateThread(NULL, 0, DispatchMemory, 0, 0, NULL); //内存的F调度线程
 	HANDLE killThread = CreateThread(NULL, 0, MyKill, 0, 0, NULL);                   //杀死进程
 	
-	//int IOID[IO_NUM];
-	/*
+	int IOID[IO_NUM];
+	
 	HANDLE dispatchIOThread[IO_NUM];
 	HANDLE virIOThread[IO_NUM];
 	for (int i = 0; i < IO_NUM; i++)
@@ -30,7 +31,9 @@ int main()
 		IOID[i] = i;
 		dispatchIOThread[i] = CreateThread(NULL, 0, ioScheduling, &IOID[i], 0, NULL); //运行IO的FIFO调度线程
 		virIOThread[i] = CreateThread(NULL, 0, virtualIO, &IOID[i], 0, NULL);           //运行IO的FIFO模拟运行
-	}*/
+	}
+
+	shell();
 
 	//DestorySemaphore();
 	printf("virOS shutdown...\n");

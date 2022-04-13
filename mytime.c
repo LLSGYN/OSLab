@@ -8,7 +8,7 @@ DWORD WINAPI TimeRun(LPVOID lpParamter)
 	while (1)
 	{
 		curTime++;//系统运行的时间片个数加一
-		printf("curTime : %d\n", curTime);
+		// printf("curTime : %d\n", curTime);
 
 		ReleaseSemaphore(timeLockForCPU, 1, NULL);//给virCPU一个时间片
 		ReleaseSemaphore(timeLockForMemory, 1, NULL);//给virMem一个时间片

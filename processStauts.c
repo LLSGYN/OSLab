@@ -17,7 +17,7 @@ void showAllProcess()
 void showSingleProcess(int pid)
 {
 	PCB pcb = allPCB[pid];
-	printf("\n---------PROCESS %d---------\n", pcb.ID);
+	printf("---------PROCESS %d---------\n", pcb.ID);
 	printf("name: %s\n", pcb.name);
 	if (pcb.fatherProID != -1)
 		printf("fatherProID: %d\n", pcb.fatherProID);
@@ -29,7 +29,7 @@ void showSingleProcess(int pid)
 	printf("all events:\n");
 	for (int i = 0; i < pcb.eventNum; i++)
 	{
-        printf("\tevent %d : type: ", i);
+        printf("\tevent %d : ", i);
         Event event = pcb.events[i];
         switch (event.eventType)
         {
@@ -43,10 +43,10 @@ void showSingleProcess(int pid)
             printf("createProcess  time: %d  needRAM: %d\n", event.time, event.needRAM);
             break;
           case proReadMem:
-            printf("proReadMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum);
+            printf("proReadMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.allocNum);
             break;
           case proWriteMem:
-            printf("proWriteMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.wrMsg.pageNum);
+            printf("proWriteMemory  time: %d  needRAM: %d  startPageID: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.wrMsg.startPageID, event.eventMsg.allocNum);
             break;
           case heapAlloc:
             printf("heapAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.allocNum);

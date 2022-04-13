@@ -48,7 +48,9 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	//********************
 	//********************
 	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //调用接口函数向内存模块申请内存
-	allPCB[nowID].eventNum = rand() % 1 + 1;//随机生成事件总数 ************************** rand() % MAX_EVENT
+
+	allPCB[nowID].eventNum = 2;//随机生成事件总数 ************************** rand() % MAX_EVENT
+	//allPCB[nowID].eventNum = rand() % 1 + 1;//随机生成事件总数 ************************** rand() % MAX_EVENT
 	printf("*************event total num is %d\n", allPCB[nowID].eventNum);
 	int mem_cnt = 0;//被占用的内存页数
 	for (int i = 0; i < allPCB[nowID].eventNum; i++)
@@ -56,7 +58,8 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		if (i == 0)
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
-			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
+			//allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
+			allPCB[nowID].events[i].eventType = occupyIO;//事件类型随机，不含编译类型事件
 		
 		printf("*******eventType is %d\n", allPCB[nowID].events[i].eventType);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
@@ -115,8 +118,8 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 	srand(time(NULL));
 	FILE *processfile = fopen(processFileName, "r");
 	if (processfile == NULL) {
-		printf("Process file does not exist,please check it!\n")
-			return 0;
+		printf("Process file does not exist,please check it!\n");
+		return 0;
 	}
 	int Id = GetNextUnusedProcessID();
 	if (Id == -1) {
@@ -147,7 +150,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 		return 0;
 	}
 	for (int i = 0; i < allPCB[Id].eventNum; i++) {
-		fscanf(processfile, "%d %d %d", &allPCB[Id].event[i].eventType, &allPCB[Id].event[i].time, &allPCB[Id].event[i].needRAM);
+		fscanf(processfile, "%d %d %d", &allPCB[Id].events[i].eventType, &allPCB[Id].events[i].time, &allPCB[Id].events[i].needRAM);
 		if (i == 0) {  //保证第一个事件是占用CPU
 			if (allPCB[Id].events[i].eventType != occupyCPU && allPCB[Id].events[i].eventType != createProcess) {
 				printf("Create process %d failed,the first event is wrong!\n", Id);
@@ -194,13 +197,13 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				if (offset >= 1024) {  //保证偏移量为0-1023之间
 					printf("Create process %d failed,offset too large.\n", Id);
 					//将打印信息写入到日志文件中
-					usedProcessID[Id] = ;
+					usedProcessID[Id] = 0;
 					processCNT--;
 					fclose(processfile);
 					return 0;
 				}
-				int start_page = rand() % allPCB[nowID].pageNum;//逻辑页号
-				int remainBytes = (allPCB[nowID].pageNum - start_page - 1) * 1024 + 1023 - offset;//剩余字节
+				int start_page = rand() % allPCB[Id].pageNum;//逻辑页号
+				int remainBytes = (allPCB[Id].pageNum - start_page - 1) * 1024 + 1023 - offset;//剩余字节
 				int len = rand() % remainBytes + 1;//读写的长度
 				allPCB[Id].events[i].eventMsg.wrMsg.startPageID = start_page;
 				allPCB[Id].events[i].eventMsg.wrMsg.offset = offset;
@@ -213,7 +216,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				if (allPCB[Id].events[i].eventMsg.allocNum > MAX_PAGE_NUM) {
 					printf("Create process %d failed,apply too many pages", Id);  
 					//将打印信息写入到日志文件中
-					usedProcessID[Id] = ;
+					usedProcessID[Id] = 0;
 					processCNT--;
 					fclose(processfile);
 					return 0;
@@ -224,7 +227,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 			else if (allPCB[Id].events[i].eventType == compile) {
 				printf("Create process %d failed,compile is not permissed.\n", Id);
 				//将打印信息写入到日志文件中
-				usedProcessID[Id] = ;
+				usedProcessID[Id] = 0;
 				processCNT--;
 				fclose(processfile);
 				return 0;
@@ -239,7 +242,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 	allPCB[Id].stackUsed = 0;
 	printf("----Process %d created...\n", Id);
 	AddProcessToQueue(&readyQueue, Id);
-	allPCB[nowID].nowState = ready;
+	allPCB[Id].nowState = ready;
 	return 1;
 }
 

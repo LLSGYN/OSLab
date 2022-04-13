@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
+#include "processStauts.h"
+#include "createProcess.h"
+#include "killProcess.h"
 
 extern void shell();

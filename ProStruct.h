@@ -87,7 +87,7 @@ typedef struct DefinePCB {
 	int heapUsed;			    //已经使用的堆的大小（页数）
 	int stackUsed;			    //已经使用的栈的大小（页数）
 	enum ProcessStates nowState;//进程状态
-	//HANDLE processMutex;        //每个进程都有一个互斥锁  #########没有用到，暂时冗余
+	HANDLE processMutex;        //每个进程都有一个互斥锁  #########没有用到，暂时冗余
 }PCB;
 
 typedef struct DefineQueue {
