@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CPU.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="createProcess.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dfVar.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="killProcess.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mytime.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OSShell.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="processStauts.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="proInit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="proIO.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="proMemory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="proQueue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="createProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dfVar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="killProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mytime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OSShell.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="processStauts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="proInit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="proIO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="proMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="proQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
