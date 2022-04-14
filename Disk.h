@@ -18,5 +18,3 @@ int getAddrBlock(char* addr);
 int releaseBlock(int blockNum, int blockSize);
 /* 退出系统 */
 void exitSystem();
-
-

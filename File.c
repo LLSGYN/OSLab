@@ -150,6 +150,20 @@ int creatFile(char fileName[], int fileSize)
 	return 0;
 }
 
+//为文件file1添加一个名为file2的链接，他们指向同一个FCB
+int linkfile(char *file1, char * file2){
+	FCB* myFCB = my_open(file1);
+    if (strlen(file2) >= NUM)
+	{
+		printf("file name too long\n");
+		return -1;
+	}
+	if (addDirUnit(currentDirTable, file2, 1, myFCB->blockNum) == -1)
+		return -1;
+	myFCB->link++;
+	return 0;
+}
+
 
 //创建目录 mkdir
 int creatDir(char dirName[])
@@ -265,6 +279,17 @@ int deleteFile(char fileName[])
 	return 0;
 }
 
+//删除链接
+int deletelink( char *file){ //移除一个文件
+    FCB* myFCB = my_open(file);
+	if(myFCB->link < 2){
+		return -1;
+	}
+	myFCB->link--;
+	int unitIndex = findUnitInTable(currentDirTable, file);
+	deleteDirUnit(currentDirTable, unitIndex);
+    return 0;
+}
 
 //释放文件内存
 int releaseFile(int FCBBlock)
@@ -382,7 +407,7 @@ FCB* my_open(char fileName[])
 
 
 //读文件
-int my_read(FCB* fcb, int length)
+char* my_read(FCB* fcb, int length)
 {
 	/*int unitIndex = findUnitInTable(currentDirTable, fileName);
 	if (unitIndex == -1)
@@ -415,12 +440,14 @@ int my_read(FCB* fcb, int length)
 	int dataSize = myFCB->dataSize;
 	/* printf("myFCB->dataSize = %d\n", myFCB->dataSize); */
 	//在不超出数据长度下，读取指定长度的数据
+	char* readtmp;
 	for (int i = 0; i < length && myFCB->readptr < dataSize; i++, myFCB->readptr++)
 	{
-		printf("%c", *(data + myFCB->readptr));
+		readtmp += *(data + myFCB->readptr);
+		// printf("%c", *(data + myFCB->readptr));
 	}
 	if (myFCB->readptr == dataSize)//读到文件末尾用#表示
-		printf("#");
+		readtmp += '#';
 	/* 下面两行只是为了模拟编辑器的关闭之前的情况， */
 	/* 这样就能控制进程不会立即释放锁 */
 	printf("\ninput a character to end up reading....\n");
@@ -431,13 +458,14 @@ int my_read(FCB* fcb, int length)
 		sem_post(myFCB->write_sem);
 	}
 	sem_post(myFCB->count_sem);
-	printf("\n");
-	return 0;
+	// printf("\n");
+	//return 0;
+	return readtmp;
 }
 
 
 //写文件，从末尾写入 write
-int my_write(FCB* fcb, char content[])
+int my_write(FCB* fcb, char content[] , int contentLen)
 {
 	//int unitIndex = findUnitInTable(currentDirTable, fileName);
 	//if (unitIndex == -1)
@@ -451,7 +479,7 @@ int my_write(FCB* fcb, char content[])
 	FCB* myFCB = fcb;
 	/* myFCB->dataSize = 0; */
 	/* myFCB->readptr = 0; */
-	int contentLen = strlen(content);
+	//int contentLen = strlen(content);
 	int fileSize = myFCB->fileSize * block_size;
 	char* data = (char*)getBlockAddr(myFCB->blockNum);
 	myFCB->write_sem = sem_open("write_sem", 0, UNUSED, UNUSED);

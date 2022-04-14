@@ -46,6 +46,10 @@ void shell()
 			printf("mkdir [DIRECTORY]							Create the DIRECTORY(ies), if they do not already exist.\n");
 			printf("pwd											Print the full filename of the current working directory.\n");
 			printf("touch [FILE]								Update the access and modification times of each FILE to the current time. A FILE argument that does not exist is created empty.\n");
+			printf("ln                                          Create a new link for file1, named file2.\n");
+			printf("rmln                                        Delete link for given file.\n");
+			printf("mv                                          Modify file name or directory name.\n");
+			printf("rm                                          Delete file.\n");
 			printf("Commands about process operation:\n");
 			printf("create [process]							Create a process named by user with random events.\n");
 			printf("kill [pid]									Send the processes identified by PID a signal to terminate it\n");
@@ -57,23 +61,69 @@ void shell()
 		}
 		else if (!strcmp(cmd, "cd"))
 		{
-			// pass
+			chdir(options);
 		}
 		else if (!strcmp(cmd, "ls"))
 		{
-			// pass
+			listfile();
 		}
 		else if (!strcmp(cmd, "mkdir"))
 		{
-			// pass
+			mkdir(options);
 		}
 		else if (!strcmp(cmd, "pwd"))
 		{
-			// pass
+			printf("%s\n",printwd());
 		}
 		else if (!strcmp(cmd, "touch"))
 		{
-			// pass
+			touch(options,0);
+		}
+		else if (!strcmp(cmd, "ln"))
+		{
+			char* file1;
+			char* file2;
+			int flg = 0;
+			for (int i = 0; options[i]; i++)
+			{
+				if(flg == 0 && options[i] != " ")
+				{
+					file1 += options[i];
+				}
+				else
+				{
+					flg = 1;
+					file2 += options[i];
+				}
+			}
+			link(file1,file2);
+		}
+		else if (!strcmp(cmd, "rmln"))
+		{
+			unlink(options);
+		}
+		else if (!strcmp(cmd, "mv"))
+		{
+			char* oldfile;
+			char* newfile;
+			int flg = 0;
+			for (int i = 0; options[i]; i++)
+			{
+				if(flg == 0 && options[i] != " ")
+				{
+					oldfile += options[i];
+				}
+				else
+				{
+					flg = 1;
+					newfile += options[i];
+				}
+			}
+			changeName(oldfile,newfile);
+		}
+		else if (!strcmp(cmd, "rm"))
+		{
+			deleteFile(options);
 		}
 		else if (!strcmp(cmd, "create"))
 		{
