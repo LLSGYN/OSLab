@@ -16,7 +16,7 @@ void InitDisk()
 	for (int i = 0; i < block_count; i++)
 		systemStartAddr[i] = '0';
 	//用于存放位示图的空间已被占用
-	int bitMapSize = block_count * sizeof(char) / block_szie;//位示图占用盘块数:100
+	int bitMapSize = block_count * sizeof(char) / block_size;//位示图占用盘块数:100
 	for (int i = 0; i < bitMapSize; i++)//从零开始分配
 		systemStartAddr[i] = '1';   //盘块已被使用
 }
@@ -57,12 +57,12 @@ int getBlock(int blockSize)
 //获得盘块的物理地址
 char* getBlockAddr(int blockNum)
 {
-	return systemStartAddr + blockNum * block_szie; //偏移量单位为字节
+	return systemStartAddr + blockNum * block_size; //偏移量单位为字节
 }
 //获得物理地址的盘块号
 int getAddrBlock(char* addr)
 {
-	return (addr - systemStartAddr) / block_szie;
+	return (addr - systemStartAddr) / block_size;
 }
 //释放盘块、
 int releaseBlock(int blockNum, int blockSize)

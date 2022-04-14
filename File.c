@@ -452,7 +452,7 @@ int my_write(FCB* fcb, char content[])
 	/* myFCB->dataSize = 0; */
 	/* myFCB->readptr = 0; */
 	int contentLen = strlen(content);
-	int fileSize = myFCB->fileSize * block_szie;
+	int fileSize = myFCB->fileSize * block_size;
 	char* data = (char*)getBlockAddr(myFCB->blockNum);
 	myFCB->write_sem = sem_open("write_sem", 0, UNUSED, UNUSED);
 	/* 获得写者锁 */
