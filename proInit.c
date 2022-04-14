@@ -83,4 +83,6 @@ void Init()
 	InitPCB();
 	InitQueue();
 	InitSemaphore();
+	InitDisk();
+	initRootDir();
 }
