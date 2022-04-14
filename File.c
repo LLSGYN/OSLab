@@ -382,17 +382,18 @@ FCB* my_open(char fileName[])
 
 
 //读文件
-int my_read(char fileName[], int length)
+int my_read(FCB* fcb, int length)
 {
-	int unitIndex = findUnitInTable(currentDirTable, fileName);
+	/*int unitIndex = findUnitInTable(currentDirTable, fileName);
 	if (unitIndex == -1)
 	{
 		printf("file no found\n");
 		return -1;
 	}
-	//控制块
-	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	控制块
+	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;*/
+	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	FCB* myFCB = fcb;
 	myFCB->readptr = 0; //文件指针重置
 	//读数据
 	char* data = (char*)getBlockAddr(myFCB->blockNum);
@@ -436,17 +437,18 @@ int my_read(char fileName[], int length)
 
 
 //写文件，从末尾写入 write
-int my_write(char fileName[], char content[])
+int my_write(FCB* fcb, char content[])
 {
-	int unitIndex = findUnitInTable(currentDirTable, fileName);
-	if (unitIndex == -1)
-	{
-		printf("file no found\n");
-		return -1;
-	}
-	//控制块
-	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	//int unitIndex = findUnitInTable(currentDirTable, fileName);
+	//if (unitIndex == -1)
+	//{
+	//	printf("file no found\n");
+	//	return -1;
+	//}
+	////控制块
+	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
+	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	FCB* myFCB = fcb;
 	/* myFCB->dataSize = 0; */
 	/* myFCB->readptr = 0; */
 	int contentLen = strlen(content);

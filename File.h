@@ -64,8 +64,9 @@ int releaseFile(int FCBBlock);
 int deleteDirUnit(dirTable* myDirTable, int unitIndex);
 int deleteDir(char dirName[]);
 int deleteFileInTable(dirTable* myDirTable, int unitIndex);
-int my_read(char fileName[], int length);
-int my_write(char fileName[], char content[]);
+int my_read(FCB* fcb, int length);
+int my_write(FCB* fcb, char content[]);
+FCB* my_open(char fileName[]);
 int findUnitInTable(dirTable* myDirTable, char unitName[]);
 
 
