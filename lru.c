@@ -158,7 +158,7 @@ int LRU_get_frame_num(int ID)
 	return resident_size[ID];
 }
 
-int main() {
+/*int main() {
 	// testing LRU
 	LRU_init(3, 4);
 	dbg_LRU(3);
@@ -173,4 +173,4 @@ int main() {
 	printf("%d\n", LRU_demand(3, 5678));
 	dbg_LRU(3);
 	return 0;
-}
+}*/
