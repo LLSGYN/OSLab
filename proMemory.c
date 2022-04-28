@@ -2,12 +2,15 @@
 
 DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 {
+#ifdef DEBUG
 	printf("memoryControl start...\n");
+#endif
 	WaitForSingleObject(contMemory, INFINITE);//等待内存调度完成后，继续Memory运行
 	while (1)
 	{
 		WaitForSingleObject(timeLockForMemory, INFINITE);
 		WaitForSingleObject(proInCPUMutex, INFINITE);//获取内存控制权限，在强制杀死进程的时候可能会争夺该信号量
+		WaitForSingleObject(allPCB[processInMemory].processMutex, INFINITE);
 
 		if (processInMemory != -1)//有进程正在运行
 		{
@@ -34,18 +37,23 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 				else if (allPCB[processInMemory].events[curEID].eventType == heapAlloc)//申请堆
 				{
 					allPCB[processInMemory].heapUsed += allPCB[processInMemory].events[curEID].needRAM;
+#ifdef DEBUG
 					printf("----Process %d heap alloc is finished...\n", processInMemory);
+#endif
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == stackAlloc)//申请栈
 				{
 					allPCB[processInMemory].stackUsed += allPCB[processInMemory].events[curEID].needRAM;
+#ifdef DEBUG
 					printf("----Process %d stack alloc is finished...\n", processInMemory);
+#endif
 				}
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 
 				WaitForSingleObject(killMutex, INFINITE);
 				UpdateEvent(processInMemory);
 				ReleaseSemaphore(killMutex, 1, NULL);
+				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 
 				ReleaseSemaphore(breakMemory, 1, NULL);
 				WaitForSingleObject(contMemory, INFINITE);
@@ -53,11 +61,13 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 			else
 			{
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
+				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			}
 		}
 		else
 		{
 			ReleaseSemaphore(proInMemMutex, 1, NULL);
+			ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			ReleaseSemaphore(breakMemory, 1, NULL);
 			WaitForSingleObject(contMemory, INFINITE);
 		}
@@ -66,7 +76,9 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 
 DWORD WINAPI DispatchMemory(LPVOID lpParamter)
 {
+#ifdef DEBUG
 	printf("Dispatch memory start...\n");
+#endif
 	while (1)
 	{
 		WaitForSingleObject(breakMemory, INFINITE); //等待Memory中断以进行Memory调度

@@ -26,8 +26,11 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		printf("Fail to create new process...\n");
 		return 0;
 	}
+	WaitForSingleObject(allPCB[nowID].processMutex, INFINITE);
 	processCNT++;//进程总数加一
+#ifdef DEBUG
 	printf("**********process totol count is %d\n", processCNT);
+#endif
 	for (int i = 0; i < MAX_NAME; i++)
 		allPCB[nowID].name[i] = processName[i];//新进程名字
 	allPCB[nowID].ID = nowID;//新进程ID
@@ -50,16 +53,18 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //调用接口函数向内存模块申请内存
 
 	allPCB[nowID].eventNum = 2;//随机生成事件总数 ************************** rand() % MAX_EVENT
-	//allPCB[nowID].eventNum = rand() % 1 + 1;//随机生成事件总数 ************************** rand() % MAX_EVENT
+	allPCB[nowID].eventNum = rand() % 1 + 1;//随机生成事件总数 ************************** rand() % MAX_EVENT
+#ifdef DEBUG
 	printf("*************event total num is %d\n", allPCB[nowID].eventNum);
+#endif
 	int mem_cnt = 0;//被占用的内存页数
 	for (int i = 0; i < allPCB[nowID].eventNum; i++)
 	{
 		if (i == 0)
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
-			//allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
-			allPCB[nowID].events[i].eventType = occupyIO;//事件类型随机，不含编译类型事件
+			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
+			// allPCB[nowID].events[i].eventType = occupyIO;//事件类型随机，不含编译类型事件
 		
 		printf("*******eventType is %d\n", allPCB[nowID].events[i].eventType);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
@@ -110,6 +115,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	printf("----Process %d created...\n", nowID);
 	AddProcessToQueue(&readyQueue, nowID);
 	allPCB[nowID].nowState = ready;
+	ReleaseSemaphore(allPCB[nowID].processMutex, 1, NULL);
 	return 1;
 }
 
@@ -126,6 +132,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 		printf("Create process fail,sorry!");
 		return 0;
 	}
+	WaitForSingleObject(allPCB[Id].processMutex, INFINITE);
 	processCNT++;
 	for (int i = 0; i < MAX_NAME; i++)
 		allPCB[Id].name[i] = processName[i];
@@ -146,6 +153,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 		//将信息打印到日志文件中，还未实现
 		usedProcessID[Id] = 0;
 		processCNT--;
+		ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 		fclose(processfile);
 		return 0;
 	}
@@ -157,6 +165,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
+				ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 				fclose(processfile);
 				return 0;
 			}
@@ -173,6 +182,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
+				ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 				fclose(processfile);
 				return 0;
 			}
@@ -186,6 +196,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 					usedProcessID[Id] = 0;
 					processCNT--;
 					fclose(processfile);
+					ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 					return 0;
 				}
 				allPCB[Id].events[i].time = rand() % MAX_NEED_TIME + 1;
@@ -199,6 +210,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
+					ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 					fclose(processfile);
 					return 0;
 				}
@@ -218,20 +230,21 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
+					ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 					fclose(processfile);
 					return 0;
 				}
 				allPCB[Id].events[i].time = MY_ALLOC_TIME;
 			}
 			//若进程事件为编译，则删除该进程
-			else if (allPCB[Id].events[i].eventType == compile) {
-				printf("Create process %d failed,compile is not permissed.\n", Id);
-				//将打印信息写入到日志文件中
-				usedProcessID[Id] = 0;
-				processCNT--;
-				fclose(processfile);
-				return 0;
-			}
+			// else if (allPCB[Id].events[i].eventType == compile) {
+			// 	printf("Create process %d failed,compile is not permissed.\n", Id);
+			// 	//将打印信息写入到日志文件中
+			// 	usedProcessID[Id] = 0;
+			// 	processCNT--;
+			// 	fclose(processfile);
+			// 	return 0;
+			// }
 		}
 	}
 	fclose(processfile);

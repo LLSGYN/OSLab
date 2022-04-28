@@ -34,3 +34,4 @@ HANDLE killMutex;                           //强制杀死进程需要获取的信号量
 HANDLE killQueueEmpty;                      //即将被杀死的进程队列的剩余空间，初始为MAX_PROCESS
 HANDLE killQueueFull;                       //即将被杀死的进程队列的进程个数，初始为0
 HANDLE killQueueMutex;                      //即将被杀死的进程队列的锁
+HANDLE printMutex;						   //输出锁，防止输出乱序

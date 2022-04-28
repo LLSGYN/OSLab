@@ -72,6 +72,8 @@ void InitSemaphore()
 			waitIOQueue[j].queueFull[i] = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 		}
 	}
+	for (int i = 0; i < MAX_PROCESS; ++i)
+		allPCB[i].processMutex = CreateSemaphore(NULL, 1, 1, NULL);
 }
 
 void Init()

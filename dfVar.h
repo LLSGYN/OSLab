@@ -34,3 +34,4 @@ extern HANDLE killMutex;                           //Ç¿ÖÆÉ±ËÀ½ø³ÌĞèÒª»ñÈ¡µÄĞÅºÅÁ
 extern HANDLE killQueueEmpty;                      //¼´½«±»É±ËÀµÄ½ø³Ì¶ÓÁĞµÄÊ£Óà¿Õ¼ä£¬³õÊ¼ÎªMAX_PROCESS
 extern HANDLE killQueueFull;                       //¼´½«±»É±ËÀµÄ½ø³Ì¶ÓÁĞµÄ½ø³Ì¸öÊı£¬³õÊ¼Îª0
 extern HANDLE killQueueMutex;                      //¼´½«±»É±ËÀµÄ½ø³Ì¶ÓÁĞµÄËø
+extern HANDLE printMutex;						   //Êä³öËø£¬·ÀÖ¹Êä³öÂÒĞò

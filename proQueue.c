@@ -4,6 +4,8 @@
 void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊı£º¸Ã½ø³ÌËùÔÚµÄ¾ÍĞ÷¶ÓÁĞ ¸Ã½ø³ÌµÄID
 {
 	int priority_num = allPCB[ID].priority;//¸Ã½ø³ÌµÄÓÅÏÈ¼¶
+	if (allPCB[ID].events[allPCB[ID].eventID].eventType != occupyCPU && allPCB[ID].events[allPCB[ID].eventID].eventType != createProcess)
+		priority_num = 0;//µ±½ø³ÌµÄÊÂ¼ş²»ÊÇCPUÏà¹ØµÄÊ±ºò£¬²»ÂÛ½ø³ÌÓĞÃ»ÓĞÓÅÏÈ¼¶£¬¸Ã½ø³Ì¶¼ÔÚÓÅÏÈ¼¶Îª0µÄÏà¹Ø¾ÍĞ÷¶ÓÁĞÖĞ
 	int pos;//¸Ã½ø³ÌÔÚ¾ÍĞ÷¶ÓÁĞÖĞµÄÎ»ÖÃ
 	for (int i = curQueue->head[priority_num]; i != curQueue->tail[priority_num]; i = (i + 1) % MAX_PROCESS)//ÕÒ´ıÉ¾½ø³ÌÔÚ¾ÍĞ÷¶ÓÁĞÖĞµÄÎ»ÖÃ£¬´Ó¶ÓÁĞÍ·¿ªÊ¼±éÀú
 	{
@@ -27,12 +29,16 @@ void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊı£º¸Ã½ø³ÌËùÔÚµÄ¾ÍĞ÷¶ÓÁĞ ¸
 
 	ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
 
+#ifdef DEBUG
 	printf("-----Remove process %d successfully.\n", ID);//debugĞÅÏ¢£¬ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
+#endif
 }
 
 void AddProcessToQueue(WaitQueue* curQueue, int ID)//½«½ø³Ì¼ÓÈëµ½Ö¸¶¨¾ÍĞ÷¶ÓÁĞÖĞ
 {
 	int priority_num = allPCB[ID].priority;//¸Ã½ø³ÌµÄÓÅÏÈ¼¶
+	if (allPCB[ID].events[allPCB[ID].eventID].eventType != occupyCPU && allPCB[ID].events[allPCB[ID].eventID].eventType != createProcess)
+		priority_num = 0;//µ±½ø³ÌµÄÊÂ¼ş²»ÊÇCPUÏà¹ØµÄÊ±ºò£¬²»ÂÛ½ø³ÌÓĞÃ»ÓĞÓÅÏÈ¼¶£¬¸Ã½ø³Ì¶¼ÔÚÓÅÏÈ¼¶Îª0µÄÏà¹Ø¾ÍĞ÷¶ÓÁĞÖĞ
 
 	WaitForSingleObject(curQueue->queueEmpty[priority_num], INFINITE);//»ñÈ¡¿ÕÓà¿Õ¼ä
 	WaitForSingleObject(curQueue->queueMutex[priority_num], INFINITE);//»ñÈ¡¸ÃÓÅÏÈ¼¶ÏÂµÄ¾ÍĞ÷¶ÓÁĞµÄÊ¹ÓÃÈ¨
@@ -46,7 +52,9 @@ void AddProcessToQueue(WaitQueue* curQueue, int ID)//½«½ø³Ì¼ÓÈëµ½Ö¸¶¨¾ÍĞ÷¶ÓÁĞÖĞ
 	ReleaseSemaphore(curQueue->totalCnt, 1, NULL);//¶ÓÁĞÖĞ½ø³Ì×ÜÊı¼ÓÒ»
 	ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
 
+#ifdef DEBUG
 	printf("-----Add process %d successfully.\n", ID);//debugĞÅÏ¢,ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
+#endif
 }
 
 //µ±Ò»¸öÊÂ¼şÍê³ÉÊ±£¬½«¸Ã½ø³Ì´Óµ±Ç°ËùÔÚµÄ¾ÍĞ÷¶ÓÁĞÉ¾³ı£¬²¢¼ÓÈëµ½ÏÂÒ»ÊÂ¼şËùÖ¸ÏòµÄ¾ÍĞ÷¶ÓÁĞÖĞ
@@ -54,7 +62,9 @@ void UpdateEvent(int proID)
 {
 	if (proID == -1)//Ç¿ÖÆÉ±ËÀ½ø³Ì¿ÉÄÜ»á°ÑÕâ¸öIDÖÃÎª-1
 		return;
+#ifdef DEBUG
 	printf("-----Process %d, job %d finish\n", proID, allPCB[proID].eventID);//debugĞÅÏ¢
+#endif
 	if (allPCB[proID].eventID < allPCB[proID].eventNum - 1)//½ø³Ì»¹ÓĞÊÂ¼şÃ»Ö´ĞĞ
 	{
 		int preEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//¸ÕÖ´ĞĞ½áÊøµÄÊÂ¼şÀàĞÍ
@@ -73,19 +83,25 @@ void UpdateEvent(int proID)
 	if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyIO)//ºÍIO¶ÓÁĞÏà¹Ø
 	{
 		int curQueueID = allPCB[proID].events[allPCB[proID].eventID].eventMsg.IDOfIO;
+#ifdef DEBUG
 		printf("-----Move process %d from queue IO %d.\n", proID, curQueueID);
+#endif
 		KillProFromQueue(&waitIOQueue[curQueueID], proID);//´ÓIO¾ÍĞ÷¶ÓÁĞÖĞÒÆ³ö
 	}
 	else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess || allPCB[proID].events[allPCB[proID].eventID].eventType == compile)
 	{
 		//ºÍCPU¶ÓÁĞÏà¹Ø
+#ifdef DEBUG
 		printf("-----Move process %d from queue CPU.\n", proID);
+#endif
 		KillProFromQueue(&readyQueue, proID);//Í¬Àí
 
 	}
 	else//ºÍÄÚ´æ¶ÓÁĞÏà¹Ø
 	{
+#ifdef DEBUG
 		printf("-----Move process %d from queue Memory.\n", proID);
+#endif
 		KillProFromQueue(&memoryQueue, proID);//Í¬Àí
 	}
 	allPCB[proID].eventID++;//ÕıÔÚ½øĞĞµÄÊÂ¼ş±àºÅ¼Ó1£¬ÈÃÏÂÒ»ÊÂ¼şÔËĞĞ
@@ -96,25 +112,33 @@ void UpdateEvent(int proID)
 	}
 	else//½ø³Ì»¹Î´½áÊø
 	{
+#ifdef DEBUG
 		printf("-----Process %d, job %d start\n", proID, allPCB[proID].eventID);
+#endif
 		if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyIO)//ºÍIO¶ÓÁĞÏà¹Ø
 		{
 			int curQueueID = allPCB[proID].events[allPCB[proID].eventID].eventMsg.IDOfIO;//µ±Ç°ÊÂ¼şÒªÊ¹ÓÃµÄIOÉè±¸ºÅ
+#ifdef DEBUG
 			printf("-----Insert process %d into queue IO %d.\n", proID, curQueueID);
+#endif
 			AddProcessToQueue(&waitIOQueue[curQueueID], proID);//½«½ø³ÌÌí¼Óµ½Óëµ±Ç°ÊÂ¼şÏà¹ØµÄ¾ÍĞ÷¶ÓÁĞÖĞ
 			allPCB[proID].nowState = wait;//ĞèÒª»ñÈ¡IO×ÊÔ´£¬Òò´Ëµ±Ç°×´Ì¬ÎªµÈ´ı
 		}
 		else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess || allPCB[proID].events[allPCB[proID].eventID].eventType == compile)
 		{
 			//ºÍCPU¶ÓÁĞÏà¹Ø
+#ifdef DEBUG
 			printf("-----Insert process %d into queue CPU.\n", proID);
+#endif
 			AddProcessToQueue(&readyQueue, proID);//Í¬Àí
 			allPCB[proID].nowState = ready;//ÔÚÓëCPUÏà¹ØµÄ¾ÍĞ÷¶ÓÁĞÖĞ×´Ì¬Îª¾ÍĞ÷
 
 		}
 		else//ºÍÄÚ´æ¶ÓÁĞÏà¹Ø
 		{
+#ifdef DEBUG
 			printf("-----Insert process %d into queue Memory.\n", proID);
+#endif
 			AddProcessToQueue(&memoryQueue, proID);//Í¬Àí
 			allPCB[proID].nowState = wait;//ĞèÒª»ñÈ¡ÄÚ´æµÄ·ÃÎÊÈ¨ÏŞµÈ×ÊÔ´£¬Òò´Ëµ±Ç°×´Ì¬ÎªµÈ´ı
 		}

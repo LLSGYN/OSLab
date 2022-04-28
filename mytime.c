@@ -4,7 +4,9 @@
 //模拟时间片的运行，暂定50ms为一个时间片
 DWORD WINAPI TimeRun(LPVOID lpParamter)
 {
+#ifdef DEBUG
 	printf("Time run start...\n");
+#endif
 	while (1)
 	{
 		curTime++;//系统运行的时间片个数加一

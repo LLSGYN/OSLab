@@ -11,6 +11,7 @@
 //模拟CPU的运行
 DWORD WINAPI VirCPU(LPVOID lpParamter)
 {
+#ifdef DEBUG
 	printf("CPU start...\n");
 	if (CPUMode == 0)
 		printf("CPU mode is FCFS...\n");
@@ -18,18 +19,24 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 		printf("CPU mode is non-preemptive priority-based...\n");
 	else if (CPUMode == 2)
 		printf("CPU mode is RR...\n");
-	else
+#endif
+	if (CPUMode > 2)
 	{
 		printf("CPU mode error...\n");
 		exit(0);
 	}
 	WaitForSingleObject(contCPU, INFINITE);//等待CPU调度完成，进行CPU的运行
+#ifdef DEBUG
 	printf("****************get contCPU.\n");
+#endif
 	while (1)
 	{
 		WaitForSingleObject(timeLockForCPU, INFINITE);//获取时间片
+#ifdef DEBUG
 		printf("*************get time successfully.\n");
+#endif
 		WaitForSingleObject(proInCPUMutex, INFINITE);//获取CPU运行权限，在强制杀死进程的时候可能会争夺该信号量
+		WaitForSingleObject(allPCB[processInCPU].processMutex, INFINITE);
 
 		if (processInCPU != -1)//有进程正在执行
 		{
@@ -54,6 +61,7 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 
 				WaitForSingleObject(killMutex, INFINITE);//保证更新进程信息的时候该进程不可以被强制销毁
 				UpdateEvent(processInCPU);//更新此进程的事件信息
+				ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 				ReleaseSemaphore(killMutex, 1, NULL);//释放killMutex
 
 				ReleaseSemaphore(breakCPU, 1, NULL);//CPU中断，等待CPU重新调度
@@ -82,11 +90,13 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 				}
 
 				ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU运行权限信号量
+				ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 			}
 		}
 		else//没有进程正在执行
 		{
 			ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU运行权限信号量
+			ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 			ReleaseSemaphore(breakCPU, 1, NULL);//CPU中断，等待CPU重新调度
 			WaitForSingleObject(contCPU, INFINITE);//等待CPU调度完成后，继续CPU的运行
 		}
@@ -96,7 +106,9 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 //模拟CPU的调度
 DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 {
+#ifdef DEBUG
 	printf("Dispatch CPU start...\n");
+#endif
 	if (CPUMode == 0 || CPUMode == 2)//FCFS RR,优先级默认为0,调度处于队头的进程运行
 	{
 		while (1)
@@ -112,7 +124,9 @@ DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 			ReleaseSemaphore(readyQueue.queueMutex[0], 1, NULL);//释放该就绪队列的访问权限
 
 			ReleaseSemaphore(contCPU, 1, NULL);//调度完成，告知CPU继续运行
+#ifdef DEBUG
 			printf("**************CPU dispatch successfully...\n");
+#endif
 
 		}
 	}

@@ -5,16 +5,20 @@ DWORD WINAPI ioScheduling(LPVOID paramter);
 
 DWORD WINAPI virtualIO(LPVOID paramter)
 {
-	int ID = *((int*)paramter);
+	int ID = *((int*)paramter); // ID是io设备号
+#ifdef DEBUG
 	printf("IO %d start...\n", ID);
 	printf("Scheduling strategy is FCFS...\n");
+#endif
 
 	WaitForSingleObject(contIO[ID], INFINITE);
 	while (1)
 	{
 		int pid = processInIO[ID];
 		WaitForSingleObject(timeLockForIO[ID], INFINITE); // 获取时间片
-		printf("*************get time successfully.\n");
+#ifdef DEBUG
+		printf("io get time successfully.\n");
+#endif
 		WaitForSingleObject(proInIOMutex[ID], INFINITE); // 获取IO设备运行权限，在强制杀死进程的时候可能会争夺该信号量
 
 		if (pid != -1) // 当前IO设备有进程在占用
@@ -31,7 +35,9 @@ DWORD WINAPI virtualIO(LPVOID paramter)
 				UpdateEvent(pid); // 更新此进程的事件信息
 				allPCB[pid].IOID = -1; // IO设备使用完毕
 				// ReleaseSemaphore(killMutex, 1, NULL); // 释放killMutex
+#ifdef DEBUG
 				printf("IO finished\n");
+#endif
 				ReleaseSemaphore(allPCB[pid].processMutex, 1, NULL); // 释放进程管理权限
 				ReleaseSemaphore(breakIO[ID], 1, NULL); // 等待IO设备进行调度管理
 				WaitForSingleObject(contIO[ID], INFINITE); // IO设备完成调度管理
@@ -40,7 +46,7 @@ DWORD WINAPI virtualIO(LPVOID paramter)
 			{
 				// 事件未完成，继续循环
 				ReleaseSemaphore(proInIOMutex[ID], 1, NULL);
-				// ReleaseSemaphore(allPCB[processInIO[ID]].processMutex, 1, NULL);
+				ReleaseSemaphore(allPCB[pid].processMutex, 1, NULL);
 			}
 		}
 		else
@@ -55,7 +61,9 @@ DWORD WINAPI virtualIO(LPVOID paramter)
 DWORD WINAPI ioScheduling(LPVOID paramter)
 {
 	int ID = *((int*)paramter);
+#ifdef DEBUG
 	printf("Dispatch IO %d start...\n", ID);
+#endif
 
 	while (1)
 	{
@@ -66,7 +74,8 @@ DWORD WINAPI ioScheduling(LPVOID paramter)
 		WaitForSingleObject(waitIOQueue[ID].queueMutex[0], INFINITE); // 获取等待队列的访问权限
 		
 		int nextPro = waitIOQueue[ID].head[0]; // 队列开始位置
-		processInIO[ID] = nextPro;
+		//processInIO[ID] = nextPro;
+		processInIO[ID] = waitIOQueue[ID].waitProcessID[0][nextPro];
 		allPCB[processInIO[ID]].IOID = ID;
 
 		ReleaseSemaphore(waitIOQueue[ID].queueMutex[0], 1, NULL);

@@ -15,7 +15,7 @@ void shell()
 		memset(input, 0, strlen(input));
 		memset(cmd, 0, strlen(cmd));
 		memset(options, 0, strlen(options));
-		WaitForSingleObject(printMutex, INFINITE);
+		// WaitForSingleObject(printMutex, INFINITE);
 		printf("$root:");
 		gets(input);
 		int i = 0;

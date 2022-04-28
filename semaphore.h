@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <winsock.h>
 #include <stdarg.h>
+#include <time.h>
 
 #ifndef PTHREAD_PROCESS_SHARED
 #define PTHREAD_PROCESS_PRIVATE	0
@@ -88,18 +89,18 @@ extern "C" {
 		HANDLE handle;
 	} arch_sem_t;
 
-#ifndef _TIMESPEC_DEFINED
-	struct timespec {
-		time_t  tv_sec;       /* Seconds */
-		long    tv_nsec;      /* Nanoseconds */
-	};
-
-	struct itimerspec {
-		struct timespec  it_interval; /* Timer period */
-		struct timespec  it_value;    /* Timer expiration */
-	};
-#define _TIMESPEC_DEFINED       1
-#endif  /* _TIMESPEC_DEFINED */
+// #ifndef _TIMESPEC_DEFINED
+// 	struct timespec {
+// 		time_t  tv_sec;       /* Seconds */
+// 		long    tv_nsec;      /* Nanoseconds */
+// 	};
+// 
+// 	struct itimerspec {
+// 		struct timespec  it_interval; /* Timer period */
+// 		struct timespec  it_value;    /* Timer expiration */
+// 	};
+// #define _TIMESPEC_DEFINED       1
+// #endif  /* _TIMESPEC_DEFINED */
 
 	int sem_init(sem_t *sem, int pshared, unsigned int value);
 	int sem_wait(sem_t *sem);

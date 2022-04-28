@@ -17,7 +17,7 @@
 #define MAX_PAGE_NUM 32//一个进程初始申请的最大页数
 #define PRIORITY_NUM 5 //优先级0--4 数字越小优先级越高
 #define IO_NUM 5       //IO设备的数量
-#define TIME_PIECE 50  //时间片长度，单位ms
+#define TIME_PIECE 200  //时间片长度，单位ms
 #define MAX_PAGE_NUM 16  //最大申请页数
 #define CREATE_PROCESS_TIME 2 //创建进程所需时间片
 #define TIME_PER_PAGE 2  //读写一页需要两个时间片
@@ -28,6 +28,7 @@
 #define NEED_MEMORY_PERCENT 10 //事件需要内存的概率
 #define MY_ALLOC_TIME 2 //申请堆栈所需的时间片个数
 
+// #define DEBUG
 
 //事件类型
 enum EventTypes {
