@@ -53,7 +53,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //调用接口函数向内存模块申请内存
 
 	allPCB[nowID].eventNum = 2;//随机生成事件总数 ************************** rand() % MAX_EVENT
-	allPCB[nowID].eventNum = rand() % 1 + 1;//随机生成事件总数 ************************** rand() % MAX_EVENT
+	// allPCB[nowID].eventNum = rand() % MAX_EVENT
 #ifdef DEBUG
 	printf("*************event total num is %d\n", allPCB[nowID].eventNum);
 #endif
@@ -63,8 +63,8 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		if (i == 0)
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
-			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
-			// allPCB[nowID].events[i].eventType = occupyIO;//事件类型随机，不含编译类型事件
+			// allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
+			allPCB[nowID].events[i].eventType = occupyIO;// 时间为占用IO
 		
 		printf("*******eventType is %d\n", allPCB[nowID].events[i].eventType);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)

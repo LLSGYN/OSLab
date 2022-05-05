@@ -2,6 +2,7 @@
 
 void shell();
 int string2Int(char string[], int start);
+int substr(char string[], int start, char **substring);
 
 void shell()
 {
@@ -44,12 +45,14 @@ void shell()
 			printf("All commands:\n");
 			printf("Commands about file operation:\n");
 			printf("cd [DIRECTORY]				Change the shell working directory.\n");
+			printf("ln [OLD NAME] [NEW NAME]		Linke the file or dirctor name with NEW NAME.\n");
 			printf("ls					List  information  about the FILEs (the current directory by default).\n");
 			printf("mkdir [DIRECTORY]			Create the DIRECTORY(ies), if they do not already exist.\n");
 			printf("mv [OLD NAME] [NEW NAME]		Rename the file or directory name from OLD NAME to NEW NAME, if it exists.\n");
 			printf("pwd					print the full filename of the current working directory.\n");
 			printf("rm [FILE]				Remove the FILE, if it exists.\n");
 			printf("rmdir [DIRECTORY]			Remove the DIRECTORY and files in it, if they exist.\n");
+			printf("rmln [NAME]				Remove the the link between two NAME.\n");
 			printf("touch [FILE] [SIZE]			A FILE argument that does not exist is created with SIZE.\n");
 			printf("Commands about process operation:\n");
 			printf("create [process]			Create a process named by user with random events.\n");
@@ -62,43 +65,56 @@ void shell()
 		}
 		else if (!strcmp(cmd, "cd"))
 		{
-			changeDir(options);
+			chdir(options);
 		}
-		else if (!strcmp(cmd, "ls"))
-		{
-			showDir();
-		}
-		else if (!strcmp(cmd, "mkdir"))
-		{
-			creatDir(options);
-		}
-		else if (!strcmp(cmd, "mv"))
+		else if (!strcmp(cmd, "ln"))
 		{
 			char oldName[30] = {0}, newName[464] = {0};
-			int i;
-			for (i = 0; i < strlen(options) && options[i] != 0 && i < 30; i++)
-			{
-				if (options[i] == ' ')
-					break;
-				oldName[i] = options[i];
-			}
-			if (options[i++] != ' ')
+			int i = substr(options, 0, oldName);
+			if (i == -1)
 			{
 				printf("Error: touch needs two parameters.\n");
 				continue;
 			}
-			for (int j = i; j < strlen(options) && options[j] != 0 && j < 30; j++)
+			substr(options, i, newName);
+			link(oldName, newName);
+		}
+		else if (!strcmp(cmd, "ls"))
+		{
+			listfile();
+		}
+		else if (!strcmp(cmd, "mkdir"))
+		{
+			mkdir(options);
+		}
+		else if (!strcmp(cmd, "mv"))
+		{
+			char oldName[30] = {0}, newName[464] = {0};
+			int i = substr(options, 0, oldName);
+			if (i == -1)
 			{
-				if (options[i] == ' ')
-					break;
-				newName[j - i] = options[j];
+				printf("Error: touch needs two parameters.\n");
+				continue;
 			}
+			substr(options, i, newName);
 			changeName(oldName, newName);
 		}
 		else if (!strcmp(cmd, "pwd"))
 		{
-			char* pwd = getPath();
+			char* pwd = printwd();
 			puts(pwd);
+		}
+		else if (!strcmp(cmd, "read"))
+		{
+			char fileName[30] = {0};
+			int i = substr(options, 0, fileName);
+			if (i == -1)
+			{
+				printf("Error: touch needs two parameters.\n");
+				continue;
+			}
+			int size = string2Int(options, i);
+			my_read(fileName, size);
 		}
 		else if (!strcmp(cmd, "rm"))
 		{
@@ -108,23 +124,33 @@ void shell()
 		{
 			deleteDir(options);
 		}
+		else if (!strcmp(cmd, "rmln"))
+		{
+			unlink(options);
+		}
 		else if (!strcmp(cmd, "touch"))
 		{
-			char fileName[30] = {0}, fileSize[464] = {0};
-			int i;
-			for (i = 0; i < strlen(options) && options[i] != 0 && i < 30; i++)
-			{
-				if (options[i] == ' ')
-					break;
-				fileName[i] = options[i];
-			}
-			if (options[i++] != ' ')
+			char fileName[30] = {0};
+			int i = substr(options, 0, fileName);
+			if (i == -1)
 			{
 				printf("Error: touch needs two parameters.\n");
 				continue;
 			}
 			int size = string2Int(options, i);
 			creatFile(fileName, size);
+		}
+		else if (!strcmp(cmd, "write"))
+		{
+			char fileName[30] = {0};
+			int i = substr(options, 0, fileName);
+			if (i == -1)
+			{
+				printf("Error: touch needs two parameters.\n");
+				continue;
+			}
+			int fd = createfd(fileName);
+			write(fd, options + i);
 		}
 		else if (!strcmp(cmd, "create"))
 		{
@@ -189,4 +215,20 @@ int string2Int(char string[], int start)
 		res = res * 10 + string[i] - '0';
 	}
 	return legal ? res : -1;
+}
+
+int substr(char string[], int start, char *substring)
+{
+	int i = start;
+	for (; i < strlen(string) + start && string[i] != 0; i++)
+	{
+		if (string[i] == ' ')
+			break;
+		substring[i - start] = string[i];
+	}
+	if (string[i++] != ' ')
+	{
+		return -1;
+	}
+	return i;
 }

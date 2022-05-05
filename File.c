@@ -150,6 +150,19 @@ int creatFile(char fileName[], int fileSize)
 	return 0;
 }
 
+//为文件file1添加一个名为file2的链接，他们指向同一个FCB
+int linkfile(char* file1, char* file2) {
+	FCB* myFCB = my_open(file1);
+	if (strlen(file2) >= NUM)
+	{
+		printf("file name too long\n");
+		return -1;
+	}
+	if (addDirUnit(currentDirTable, file2, 1, myFCB->blockNum) == -1)
+		return -1;
+	myFCB->link++;
+	return 0;
+}
 
 //创建目录 mkdir
 int creatDir(char dirName[])
@@ -265,6 +278,17 @@ int deleteFile(char fileName[])
 	return 0;
 }
 
+//删除链接
+int deletelink(char* file) { //移除一个文件
+	FCB* myFCB = my_open(file);
+	if (myFCB->link < 2) {
+		return -1;
+	}
+	myFCB->link--;
+	int unitIndex = findUnitInTable(currentDirTable, file);
+	deleteDirUnit(currentDirTable, unitIndex);
+	return 0;
+}
 
 //释放文件内存
 int releaseFile(int FCBBlock)
