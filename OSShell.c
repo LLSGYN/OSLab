@@ -106,15 +106,19 @@ void shell()
 		}
 		else if (!strcmp(cmd, "read"))
 		{
-			char fileName[30] = {0};
+			char fileName[30] = { 0 };
 			int i = substr(options, 0, fileName);
 			if (i == -1)
 			{
-				printf("Error: touch needs two parameters.\n");
+				printf("Error: read needs two parameters.\n");
 				continue;
 			}
+			int fd = createfd(fileName);
 			int size = string2Int(options, i);
-			my_read(fileName, size);
+			char read_buf[495];
+			//printf("size %d", size);
+			read(fd, read_buf, size);
+			//printf("%s", read_buf);
 		}
 		else if (!strcmp(cmd, "rm"))
 		{
@@ -146,10 +150,12 @@ void shell()
 			int i = substr(options, 0, fileName);
 			if (i == -1)
 			{
-				printf("Error: touch needs two parameters.\n");
+				printf("Error: write needs two parameters.\n");
 				continue;
 			}
 			int fd = createfd(fileName);
+			//printf("%d", fd);
+			//printf("%s", options + i);
 			write(fd, options + i);
 		}
 		else if (!strcmp(cmd, "create"))

@@ -400,37 +400,42 @@ FCB* my_open(char fileName[])
 	}
 	//控制块
 	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
+	//printf("startBlock%d", FCBBlock);
 	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
 	return myFCB;
 }
 
 
 //读文件
-int my_read(char fileName[], int length)
+int my_read(FCB* myFCB, int length)
 {
-	int unitIndex = findUnitInTable(currentDirTable, fileName);
-	if (unitIndex == -1)
-	{
-		printf("file no found\n");
-		return -1;
-	}
-	//控制块
-	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	//int unitIndex = findUnitInTable(currentDirTable, fileName);
+	//if (unitIndex == -1)
+	//{
+	//	printf("file no found\n");
+	//	return -1;
+	//}
+	////控制块
+	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
+	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
 	myFCB->readptr = 0; //文件指针重置
 	//读数据
 	char* data = (char*)getBlockAddr(myFCB->blockNum);
 	int val;
-	myFCB->count_sem = sem_open("count_sem", 0, UNUSED, UNUSED);
+	myFCB->count_sem = sem_open("count_sem", O_CREAT, UNUSED, 0);
 	/* 获取记录读者数量的锁 */
 	if (sem_wait(myFCB->count_sem) == -1)
 		perror("sem_wait error");
 	sem_getvalue(myFCB->count_sem, &val);
+	//printf("count_sem val:%d\n", val);
 	/* 根据拥有锁的进程数量来判断是否是第一个读者 */
 	/* 如果是第一个读者就负责锁上写者锁 */
 	if (val == NUMREADER - 1)
 	{
-		myFCB->write_sem = sem_open("write_sem", 0, UNUSED, UNUSED);
+		myFCB->write_sem = sem_open("write_sem", O_CREAT, UNUSED, 0);
+		//int val;
+		//sem_getvalue(myFCB->write_sem, &val);
+		//printf("write_sem val:%d\n", val);// 1，当前无人写，锁上
 		if (sem_wait(myFCB->write_sem) == -1)
 			perror("sem_wait error");
 	}
@@ -460,23 +465,23 @@ int my_read(char fileName[], int length)
 
 
 //写文件，从末尾写入 write
-int my_write(char fileName[], char content[])
+int my_write(FCB* myFCB, char content[])
 {
-	int unitIndex = findUnitInTable(currentDirTable, fileName);
-	if (unitIndex == -1)
-	{
-		printf("file no found\n");
-		return -1;
-	}
-	//控制块
-	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
-	/* myFCB->dataSize = 0; */
-	/* myFCB->readptr = 0; */
+	//int unitIndex = findUnitInTable(currentDirTable, fileName);
+	//if (unitIndex == -1)
+	//{
+	//	printf("file no found\n");
+	//	return -1;
+	//}
+	////控制块
+	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
+	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	myFCB->dataSize = 0; 
+	myFCB->readptr = 0; 
 	int contentLen = strlen(content);
 	int fileSize = myFCB->fileSize * block_szie;
 	char* data = (char*)getBlockAddr(myFCB->blockNum);
-	myFCB->write_sem = sem_open("write_sem", 0, UNUSED, UNUSED);
+	myFCB->write_sem = sem_open("write_sem", O_CREAT, UNUSED, 0);
 	/* 获得写者锁 */
 	if (sem_wait(myFCB->write_sem) == -1)
 		perror("sem_wait error");

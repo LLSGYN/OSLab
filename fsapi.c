@@ -31,10 +31,11 @@ int write(int fd, char* buf) {
 
 //从文件描述符中读取 n 字节到 buf ；返回读取字节数，文件结束为 0
 int read(int fd, char* buf, int n) {
-    buf = my_read(FDE[fd].tagetFCB, n);
-    if (strlen(buf) < n) {
+    //buf = my_read(FDE[fd].tagetFCB, n);
+	my_read(FDE[fd].tagetFCB, n);
+    /*if (strlen(buf) < n) {
         return 0;
-    }
+    }*/
     return n;
 }
 
