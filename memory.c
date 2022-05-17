@@ -205,26 +205,26 @@ int memory_free(int ID) // release memory when process is terminated
 	share_table[ID].n_pages = 0;
 }
 
-int main()
-{
-	ram_init();
-	mem_init();
-	allPCB[1].fatherProID = -1;
-	memory_alloc(1, 50);
-	flush_tlb(1);
-	dbg_residents(1);
-	// return 0;
-	char buf[16] = "hello world!";
-	write_memory(buf, 1, 17000, 13);
-	// char buf1[16] = "another text";
-	// write_memory(buf1, 1, 10000, 13);
-	// dbg_residents(1);
-	char nb[16];
-	read_memory(nb, 1, 17000, 13);
-	puts(nb);
-	// read_memory(nb, 1, 10000, 13);
-	// puts(nb);
-	dbg_residents(1);
+// int main()
+// {
+// 	ram_init();
+// 	mem_init();
+// 	allPCB[1].fatherProID = -1;
+// 	memory_alloc(1, 50);
+// 	flush_tlb(1);
+// 	dbg_residents(1);
+// 	// return 0;
+// 	char buf[16] = "hello world!";
+// 	write_memory(buf, 1, 17000, 13);
+// 	// char buf1[16] = "another text";
+// 	// write_memory(buf1, 1, 10000, 13);
+// 	// dbg_residents(1);
+// 	char nb[16];
+// 	read_memory(nb, 1, 17000, 13);
+// 	puts(nb);
+// 	// read_memory(nb, 1, 10000, 13);
+// 	// puts(nb);
+// 	dbg_residents(1);
 
-	return 0;
-}
+// 	return 0;
+// }
