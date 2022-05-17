@@ -14,7 +14,7 @@
 #define MAX_NAME  256  //进程名字的最大长度
 #define MAX_PROCESS 16 //最大进程数
 #define MAX_EVENT 15   //一个进程包含的最大事件数
-#define MAX_PAGE_NUM 32//一个进程初始申请的最大页数
+// #define MAX_PAGE_NUM 32//一个进程初始申请的最大页数 有冲突，先注释掉
 #define PRIORITY_NUM 5 //优先级0--4 数字越小优先级越高
 #define IO_NUM 5       //IO设备的数量
 #define TIME_PIECE 200  //时间片长度，单位ms
