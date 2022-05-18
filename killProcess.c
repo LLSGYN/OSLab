@@ -37,7 +37,6 @@ void KillProcess(int ID)//强制销毁指定的进程
 	switch (nowEtype)
 	{
 	case createProcess:
-	case compile:
 	case occupyCPU:
 	{
 #ifdef DEBUG
@@ -150,5 +149,6 @@ DWORD WINAPI MyKill(LPVOID lpParam)
 		processCNT--;//进程总数减一
 		toBeKilled[killID] = 0;//当前ID号已经不在待删队列中
 		printf("\nINFO:process %d is killed!\n", killID);//debug信息
+		printf("$root:");
 	}
 }

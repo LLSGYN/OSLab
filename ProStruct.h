@@ -17,7 +17,7 @@
 // #define MAX_PAGE_NUM 32//一个进程初始申请的最大页数 有冲突，先注释掉
 #define PRIORITY_NUM 5 //优先级0--4 数字越小优先级越高
 #define IO_NUM 5       //IO设备的数量
-#define TIME_PIECE 200  //时间片长度，单位ms
+#define TIME_PIECE 50  //时间片长度，单位ms
 #define MAX_PAGE_NUM 16  //最大申请页数
 #define CREATE_PROCESS_TIME 2 //创建进程所需时间片
 #define TIME_PER_PAGE 2  //读写一页需要两个时间片
@@ -25,10 +25,10 @@
 #define MAX_NEED_TIME 30  //事件所能够得到的最大时间片数
 #define MAX_EVENT_TYPE 7 //用户进程事件类型最大数量
 #define CREATE_PROESS_TIME 3 //创建一个进程需要的时间片个数
-#define NEED_MEMORY_PERCENT 10 //事件需要内存的概率
+#define NEED_MEMORY_PERCENT 50 //事件需要内存的概率
 #define MY_ALLOC_TIME 2 //申请堆栈所需的时间片个数
 
-// #define DEBUG
+#define DEBUG
 
 //事件类型
 enum EventTypes {
@@ -39,7 +39,7 @@ enum EventTypes {
 	proReadMem,		//读内存
 	heapAlloc,	    //申请堆
 	stackAlloc,		//申请栈
-	compile,		//-------编译-------
+	// compile,		//-------编译-------
 };
 
 //进程状态

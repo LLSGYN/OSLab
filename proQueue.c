@@ -16,7 +16,9 @@ void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊý£º¸Ã½ø³ÌËùÔÚµÄ¾ÍÐ÷¶ÓÁÐ ¸
 		}
 	}
 
+	printf("queue test1\n");
 	WaitForSingleObject(curQueue->queueMutex[priority_num], INFINITE);//½ÓÏÂÀ´µÄ²Ù×÷ÒªÐÞ¸Ä¾ÍÐ÷¶ÓÁÐ£¬·ÀÖ¹Í¬Ò»ÓÅÏÈ¼¶µÄ¶à¸ö½ø³ÌÍ¬Ê±ÐÞ¸Ä¸Ã¾ÍÐ÷¶ÓÁÐ
+	printf("queue test2\n");
 
 	for (int i = pos; i != curQueue->head[priority_num]; i = (i - 1 + MAX_PROCESS) % MAX_PROCESS)//½«´ýÉ¾½ø³ÌÇ°ÃæµÄ½ø³ÌÎ»ÖÃÏòºóÒÆ
 		curQueue->waitProcessID[priority_num][i] = curQueue->waitProcessID[priority_num][(i - 1 + MAX_PROCESS) % MAX_PROCESS];
@@ -88,7 +90,7 @@ void UpdateEvent(int proID)
 #endif
 		KillProFromQueue(&waitIOQueue[curQueueID], proID);//´ÓIO¾ÍÐ÷¶ÓÁÐÖÐÒÆ³ö
 	}
-	else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess || allPCB[proID].events[allPCB[proID].eventID].eventType == compile)
+	else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess)
 	{
 		//ºÍCPU¶ÓÁÐÏà¹Ø
 #ifdef DEBUG
@@ -124,7 +126,7 @@ void UpdateEvent(int proID)
 			AddProcessToQueue(&waitIOQueue[curQueueID], proID);//½«½ø³ÌÌí¼Óµ½Óëµ±Ç°ÊÂ¼þÏà¹ØµÄ¾ÍÐ÷¶ÓÁÐÖÐ
 			allPCB[proID].nowState = wait;//ÐèÒª»ñÈ¡IO×ÊÔ´£¬Òò´Ëµ±Ç°×´Ì¬ÎªµÈ´ý
 		}
-		else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess || allPCB[proID].events[allPCB[proID].eventID].eventType == compile)
+		else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess)
 		{
 			//ºÍCPU¶ÓÁÐÏà¹Ø
 #ifdef DEBUG

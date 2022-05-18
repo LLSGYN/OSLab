@@ -54,9 +54,6 @@ void showSingleProcess(int pid)
           case stackAlloc:
             printf("stackAlloc  time: %d  needRAM: %d  pageNum: %d\n", event.time, event.needRAM, event.eventMsg.allocNum);
             break;
-          case compile:
-            printf("compile  time: %d  needRAM: %d  fileName: %s\n", event.time, event.needRAM, event.eventMsg.filename);
-            break;
           default:
             printf("event type error!\n");
             break;

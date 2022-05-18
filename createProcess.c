@@ -46,14 +46,13 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	allPCB[nowID].eventID = 0;
 	allPCB[nowID].eventTime = 0;
 
-	allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//随机生成申请的内存页数 最小为3
+	// allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//随机生成申请的内存页数 最小为3
+	allPCB[nowID].pageNum = 5;//随机生成申请的内存页数 最小为3
 	//调用接口函数向内存模块申请内存
-	//********************
-	//********************
-	//MemoryAlloc(nowID, allPCB[nowID].pageNum, allPCB[nowID].fatherProID); //调用接口函数向内存模块申请内存
+	memory_alloc(nowID, allPCB[nowID].pageNum);
 
-	allPCB[nowID].eventNum = 2;//随机生成事件总数 ************************** rand() % MAX_EVENT
-	// allPCB[nowID].eventNum = rand() % MAX_EVENT
+	allPCB[nowID].eventNum = 3;//随机生成事件总数 ************************** rand() % MAX_EVENT
+	// allPCB[nowID].eventNum = rand() % MAX_EVENT + 1;
 #ifdef DEBUG
 	printf("*************event total num is %d\n", allPCB[nowID].eventNum);
 #endif
@@ -64,7 +63,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
 			// allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
-			allPCB[nowID].events[i].eventType = occupyIO;// 时间为占用IO
+			allPCB[nowID].events[i].eventType = proReadMem;// 时间为占用IO
 		
 		printf("*******eventType is %d\n", allPCB[nowID].events[i].eventType);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
@@ -81,6 +80,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		else if (allPCB[nowID].events[i].eventType == heapAlloc || allPCB[nowID].events[i].eventType == stackAlloc)//申请堆栈事件
 		{
 			int getMem = rand() % 100;//事件需要内存的概率 小于MAX_NEED_MEMORY则需要
+			getMem = 0;
 			if (getMem < NEED_MEMORY_PERCENT && mem_cnt < allPCB[nowID].pageNum)//需要内存 而且 内存没被分配完
 			{
 				allPCB[nowID].events[i].needRAM = rand() % (allPCB[nowID].pageNum - mem_cnt) + 1;//随机获得内存大小（单位：页
@@ -259,7 +259,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 	return 1;
 }
 
-int CreateCompileProcess(char* fileName)
-{
-
-}
+// int CreateCompileProcess(char* fileName)
+// {
+// 
+// }

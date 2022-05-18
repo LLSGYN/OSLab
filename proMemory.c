@@ -9,15 +9,17 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 	while (1)
 	{
 		WaitForSingleObject(timeLockForMemory, INFINITE);
-		WaitForSingleObject(proInCPUMutex, INFINITE);//获取内存控制权限，在强制杀死进程的时候可能会争夺该信号量
+		WaitForSingleObject(proInMemMutex, INFINITE);//获取内存控制权限，在强制杀死进程的时候可能会争夺该信号量
 		WaitForSingleObject(allPCB[processInMemory].processMutex, INFINITE);
 
+		printf("memory test1\n");
 		if (processInMemory != -1)//有进程正在运行
 		{
 			int curEID = allPCB[processInMemory].eventID;//当前事件ID
 			allPCB[processInMemory].eventTime++;//事件运行时间加一
 			if (allPCB[processInMemory].eventTime == allPCB[processInMemory].events[curEID].time)//当前事件即将执行完成
 			{
+				printf("memory test2\n");
 				if (allPCB[processInMemory].events[curEID].eventType == proReadMem)//读内存
 				{
 					int start_page = allPCB[processInMemory].events[curEID].eventMsg.wrMsg.startPageID;//逻辑页号
@@ -25,6 +27,10 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 					int len = allPCB[processInMemory].events[curEID].eventMsg.wrMsg.len;//读内存的长度
 					//########################
 					//调用读内存接口函数
+					char* memBuf = (char*)malloc(sizeof(char) * len);
+					flush_tlb(allPCB[processInMemory].ID);
+					read_memory(memBuf, allPCB[processInMemory].ID, start_page * PAGE_SIZE + offset, len);
+					free(memBuf);
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == proWriteMem)//写内存
 				{
@@ -33,6 +39,10 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 					int len = allPCB[processInMemory].events[curEID].eventMsg.wrMsg.len;//读内存的长度
 					//########################
 					//调用写内存函数
+					char* memBuf = (char*)malloc(sizeof(char) * len);
+					flush_tlb(allPCB[processInMemory].ID);
+					write_memory(memBuf, allPCB[processInMemory].ID, start_page * PAGE_SIZE + offset, len);
+					free(memBuf);
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == heapAlloc)//申请堆
 				{
@@ -60,12 +70,14 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 			}
 			else
 			{
+				printf("memory test3\n");
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			}
 		}
 		else
 		{
+			printf("memory test4\n");
 			ReleaseSemaphore(proInMemMutex, 1, NULL);
 			ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			ReleaseSemaphore(breakMemory, 1, NULL);
@@ -89,7 +101,7 @@ DWORD WINAPI DispatchMemory(LPVOID lpParamter)
 		int subcript = memoryQueue.head[0];//队头
 		processInMemory = memoryQueue.waitProcessID[0][subcript];//被选中的进程ID
 		allPCB[processInMemory].nowState = run;//该进程状态为运行态
-		ReleaseSemaphore(memoryQueue.queueEmpty[0], 1, NULL);//释放该队列的访问权限
+		ReleaseSemaphore(memoryQueue.queueMutex[0], 1, NULL);//释放该队列的访问权限
 
 		ReleaseSemaphore(contMemory, 1, NULL);//调度完成，告知模拟内存继续运行
 

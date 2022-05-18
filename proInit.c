@@ -87,4 +87,6 @@ void Init()
 	InitSemaphore();
 	InitDisk();
 	initRootDir();
+	ram_init();
+	mem_init();
 }

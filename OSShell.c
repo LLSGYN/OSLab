@@ -45,23 +45,25 @@ void shell()
 			printf("All commands:\n");
 			printf("Commands about file operation:\n");
 			printf("cd [DIRECTORY]				Change the shell working directory.\n");
-			printf("ln [OLD NAME] [NEW NAME]		Linke the file or dirctor name with NEW NAME.\n");
+			// printf("ln [OLD NAME] [NEW NAME]		Linke the file or dirctor name with NEW NAME.\n");
 			printf("ls					List  information  about the FILEs (the current directory by default).\n");
 			printf("mkdir [DIRECTORY]			Create the DIRECTORY(ies), if they do not already exist.\n");
 			printf("mv [OLD NAME] [NEW NAME]		Rename the file or directory name from OLD NAME to NEW NAME, if it exists.\n");
 			printf("pwd					print the full filename of the current working directory.\n");
+			// printf("read [FILE] [LEN]			Read LEN size content from the FILE\n");
 			printf("rm [FILE]				Remove the FILE, if it exists.\n");
 			printf("rmdir [DIRECTORY]			Remove the DIRECTORY and files in it, if they exist.\n");
-			printf("rmln [NAME]				Remove the the link between two NAME.\n");
+			// printf("rmln [NAME]				Remove the the link between two NAME.\n");
 			printf("touch [FILE] [SIZE]			A FILE argument that does not exist is created with SIZE.\n");
+			// printf("wirte [FILE] [BUF]			Wirte the content of BUF into the FILE\n");
 			printf("Commands about process operation:\n");
 			printf("create [process]			Create a process named by user with random events.\n");
 			printf("kill [pid]				Send the processes identified by PID a signal to terminate it\n");
 			printf("ps					Display information about the active processes.\n");
-			printf("run [FILE]				Run the executable [FILE]\n");
+			// printf("run [FILE]				Run the executable [FILE]\n");
 			printf("shutdown				Power-off the operating system.\n");
 			printf("Commands about memory operation:\n");
-			printf("free					Display amount of free and used memory in the system.\n");
+			// printf("free					Display amount of free and used memory in the system.\n");
 		}
 		else if (!strcmp(cmd, "cd"))
 		{

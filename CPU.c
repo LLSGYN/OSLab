@@ -52,11 +52,6 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 					//############################
 					CreateMyProcess(name, processInCPU);//创建进程
 				}
-				else if (allPCB[processInCPU].events[allPCB[processInCPU].eventID].eventType == compile)//若事件类型为文件相关的操作
-				{
-					//进行相应的操作
-					//############################
-				}
 				ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU运行权限信号量，在UpdateEvent之前释放，防止发生死锁
 
 				WaitForSingleObject(killMutex, INFINITE);//保证更新进程信息的时候该进程不可以被强制销毁

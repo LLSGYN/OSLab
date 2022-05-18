@@ -16,3 +16,6 @@ pg_t page_table[MAX_PROCESS][NUM_PAGE];
 int try_to_write(int ID, int page);
 
 int do_no_page(mem_t* mem, int ID, int page);
+
+extern void mem_init();
+extern int memory_alloc(int ID, int page_required);
