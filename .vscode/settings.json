@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "memdefs.h": "c",
+        "mmu.h": "c",
+        "swap.h": "c",
+        "memory.h": "c",
+        "dfvar.h": "c",
+        "prostruct.h": "c",
+        "lru.h": "c",
+        "stdio.h": "c"
+    }
+}

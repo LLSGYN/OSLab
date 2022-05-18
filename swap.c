@@ -85,6 +85,18 @@ int destroy_residents(int ID)
 	}
 }
 
+void dbg_residents(int ID)
+{
+	switch (op)
+	{
+	case 0:
+		dbg_LRU(ID);
+		break;
+	
+	default:
+		break;
+	}
+}
 // int add_frame(int ID, int page)
 // {
 // 	switch (op)
