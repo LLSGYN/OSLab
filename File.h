@@ -24,6 +24,7 @@ typedef struct dirUnit {
 #define DIRTABLE_MAX_SIZE 15    //目录表项最大值
 //目录表结构：
 typedef struct dirTable {
+	int startBlock;//dirTable起始盘块
 	int dirUnitAmount;//目录项数目
 	dirUnit dirs[DIRTABLE_MAX_SIZE];//目录项列表
 }dirTable;
@@ -48,7 +49,7 @@ typedef struct FCB {
 /*
    文件控制块包含了文件数据的起始位置和大小。dataSize,readptr是为文件的读写操作而准备的，记录文件已写入的内容长度（不可超过文件大小），和当前读取的位置。Link记录了文件的链接数，用于文件的共享，当文件的链接数为0时，系统可以回收文件的空间。同样的，一个FCB大小为20B，但也用一个盘块保存。
    由于采用的是连续分配方式，所以系统规定文件被创建时，必须给出文件的大小，而且后期也不能修改文件的大小。
-   */
+   */ 
 
 void initRootDir();
 char* getPath();

@@ -12,6 +12,8 @@ dirTable* rootDirTable; //根目录
 dirTable* currentDirTable;  //当前位置
 char path[200]; //保存当前绝对路径
 
+//TODO：将文件系统操作都在内存page中进行，磁盘系统负责管理读页、写页，并对接上调换；
+
 
 //初始化根目录
 void initRootDir()
@@ -20,8 +22,11 @@ void initRootDir()
 	int startBlock = getBlock(1);
 	if (startBlock == -1)
 		return;
-	rootDirTable = (dirTable*)getBlockAddr(startBlock);
+	rootDirTable = (dirTable*)readBlock(startBlock);
+	printf("rootDir block:%d\n", startBlock);
+	printf("%p\n", rootDirTable);
 	rootDirTable->dirUnitAmount = 0;
+	rootDirTable->startBlock = startBlock;
 	//将自身作为父级目录
 	//addDirUnit(rootDirTable, "..", 0, startBlock);
 
@@ -42,6 +47,8 @@ char* getPath()
 //展示当前目录 ls
 void showDir()
 {
+	printf("rootDirTable: %p\n", rootDirTable);
+	printf("currentDirTable: %p\n", currentDirTable);
 	int unitAmount = currentDirTable->dirUnitAmount;
 	printf("total:%d\n", unitAmount);
 	printf("name\ttype\tsize\tFCB\tdataStartBlock\n");
@@ -55,12 +62,12 @@ void showDir()
 		if (unitTemp.type == 1)
 		{
 			int FCBBlock = unitTemp.startBlock;
-			FCB* fileFCB = (FCB*)getBlockAddr(FCBBlock);
+			FCB* fileFCB = (FCB*)readBlock(FCBBlock);
 			printf("%d\t%d\t%d\n", fileFCB->fileSize, FCBBlock, fileFCB->blockNum);
 		}
 		else {
 			int dirBlock = unitTemp.startBlock;
-			dirTable* myTable = (dirTable*)getBlockAddr(dirBlock);
+			dirTable* myTable = (dirTable*)readBlock(dirBlock);
 			printf("%d\t%d\n", myTable->dirUnitAmount, unitTemp.startBlock);
 		}
 	}
@@ -85,7 +92,7 @@ int changeDir(char dirName[])
 	}
 	//修改当前目录
 	int dirBlock = currentDirTable->dirs[unitIndex].startBlock;
-	currentDirTable = (dirTable*)getBlockAddr(dirBlock);
+	currentDirTable = (dirTable*)readBlock(dirBlock);
 	//修改全局绝对路径
 	if (strcmp(dirName, "..") == 0)
 	{
@@ -164,36 +171,14 @@ int linkfile(char* file1, char* file2) {
 	return 0;
 }
 
-//创建目录 mkdir
-int creatDir(char dirName[])
-{
-	if (strlen(dirName) >= NUM)
-	{
-		printf("file name too long\n");
-		return -1;
-	}
-	//为目录表分配空间
-	int dirBlock = getBlock(1);
-	if (dirBlock == -1)
-		return -1;
-	//将目录作为目录项添加到当前目录
-	if (addDirUnit(currentDirTable, dirName, 0, dirBlock) == -1)
-		return -1;
-	//为新建的目录添加一个到父目录的目录项
-	dirTable* newTable = (dirTable*)getBlockAddr(dirBlock);
-	newTable->dirUnitAmount = 0;
-	char parent[] = "..";
-	if (addDirUnit(newTable, parent, 0, getAddrBlock((char*)currentDirTable)) == -1)
-		return -1;
-	return 0;
-}
+
 
 
 //创建FCB
 int creatFCB(int fcbBlockNum, int fileBlockNum, int fileSize)
 {
 	//找到fcb的存储位置
-	FCB* currentFCB = (FCB*)getBlockAddr(fcbBlockNum);
+	FCB* currentFCB = (FCB*)readBlock(fcbBlockNum);
 	currentFCB->blockNum = fileBlockNum;//文件数据起始位置
 	currentFCB->fileSize = fileSize;//文件大小
 	currentFCB->link = 1;//文件链接数
@@ -216,10 +201,45 @@ int creatFCB(int fcbBlockNum, int fileBlockNum, int fileSize)
 	return 0;
 }
 
+//创建目录 mkdir
+int creatDir(char dirName[])
+{
+	printf("rootDirTable:    %p\n", rootDirTable);
+	printf("currentDirTable: %p\n", currentDirTable);
+	printf("rootDirTableBlock:    %d\n", rootDirTable->startBlock);
+	printf("currentDirTableBlock: %d\n", currentDirTable->startBlock);
+	if (strlen(dirName) >= NUM)
+	{
+		printf("file name too long\n");
+		return -1;
+	}
+	//为目录表分配空间
+	int dirBlock = getBlock(1);
+	printf("dirBlock in createDir: %d\n", dirBlock);
+	if (dirBlock == -1)
+		return -1;
+	//将目录作为目录项添加到当前目录
+	if (addDirUnit(currentDirTable, dirName, 0, dirBlock) == -1)
+		return -1;
+	//为新建的目录添加一个到父目录的目录项
+	dirTable* newTable = (dirTable*)readBlock(dirBlock);
+	newTable->startBlock = dirBlock;
+	newTable->dirUnitAmount = 0;
+	char parent[] = "..";
+	if (addDirUnit(newTable, parent, 0, currentDirTable->startBlock) == -1) {
+		printf("addDirUnit Failed");
+		return -1;
+	}
+		
+	printf("rootDirTable:    %p\n", rootDirTable);
+	printf("currentDirTable: %p\n", currentDirTable);
+	return 0;
+}
 
 //添加目录项
 int addDirUnit(dirTable* myDirTable, char fileName[], int type, int FCBBlockNum)
 {
+	printf("DirTable in addDirUnit: %p\n", myDirTable);
 	//获得目录表
 	int dirUnitAmount = myDirTable->dirUnitAmount;
 	//检测目录表示是否已满
@@ -236,13 +256,17 @@ int addDirUnit(dirTable* myDirTable, char fileName[], int type, int FCBBlockNum)
 		return -1;
 	}
 	//构建新目录项
+	printf("myDirTable %p", &myDirTable);
 	dirUnit* newDirUnit = &myDirTable->dirs[dirUnitAmount];
 	myDirTable->dirUnitAmount++;//当前目录表的目录项数量+1
 	//设置新目录项内容
+	
 	strcpy(newDirUnit->fileName, fileName);
+	
 	newDirUnit->type = type;
 	newDirUnit->startBlock = FCBBlockNum;
-
+	printf("fileName, type:%s %s\n", newDirUnit->fileName, newDirUnit->type);
+	writeBlock(myDirTable->startBlock, myDirTable);
 	return 0;
 }
 
@@ -293,7 +317,7 @@ int deletelink(char* file) { //移除一个文件
 //释放文件内存
 int releaseFile(int FCBBlock)
 {
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	FCB* myFCB = (FCB*)readBlock(FCBBlock);
 	myFCB->link--;  //链接数减一
 	//无链接，删除文件
 	if (myFCB->link == 0)
@@ -367,7 +391,7 @@ int deleteFileInTable(dirTable* myDirTable, int unitIndex)
 	{
 		//找到目录位置
 		int FCBBlock = myUnit.startBlock;
-		dirTable* table = (dirTable*)getBlockAddr(FCBBlock);
+		dirTable* table = (dirTable*)readBlock(FCBBlock);
 		//递归删除目录下的所有文件
 		printf("cycle delete dir %s\n", myUnit.fileName);
 		int unitCount = table->dirUnitAmount;
@@ -401,7 +425,7 @@ FCB* my_open(char fileName[])
 	//控制块
 	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
 	//printf("startBlock%d", FCBBlock);
-	FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	FCB* myFCB = (FCB*)readBlock(FCBBlock);
 	return myFCB;
 }
 
@@ -417,10 +441,10 @@ int my_read(FCB* myFCB, int length)
 	//}
 	////控制块
 	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	//FCB* myFCB = (FCB*)readBlock(FCBBlock);
 	myFCB->readptr = 0; //文件指针重置
 	//读数据
-	char* data = (char*)getBlockAddr(myFCB->blockNum);
+	char* data = (char*)readBlock(myFCB->blockNum);
 	int val;
 	myFCB->count_sem = sem_open("count_sem", O_CREAT, UNUSED, 0);
 	/* 获取记录读者数量的锁 */
@@ -475,12 +499,12 @@ int my_write(FCB* myFCB, char content[])
 	//}
 	////控制块
 	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
-	//FCB* myFCB = (FCB*)getBlockAddr(FCBBlock);
+	//FCB* myFCB = (FCB*)readBlock(FCBBlock);
 	myFCB->dataSize = 0; 
 	myFCB->readptr = 0; 
 	int contentLen = strlen(content);
 	int fileSize = myFCB->fileSize * block_szie;
-	char* data = (char*)getBlockAddr(myFCB->blockNum);
+	char* data = (char*)readBlock(myFCB->blockNum);
 	myFCB->write_sem = sem_open("write_sem", O_CREAT, UNUSED, 0);
 	/* 获得写者锁 */
 	if (sem_wait(myFCB->write_sem) == -1)
