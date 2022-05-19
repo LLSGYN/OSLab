@@ -9,6 +9,7 @@ typedef unsigned int addr_t;
 
 // initialize memory
 extern void ram_init();
+extern void dbg_tlb();
 
 void flush_tlb(int ID);
 

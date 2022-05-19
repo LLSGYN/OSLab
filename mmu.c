@@ -55,6 +55,7 @@ void flush_tlb(int ID) //check 1
 	head->next = NULL;
 	tail = NULL;
 	cpid = ID;
+	qlen = 0;
 }
 
 lru_node* _push_head(int page) // check 1

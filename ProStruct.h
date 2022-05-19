@@ -28,7 +28,7 @@
 #define NEED_MEMORY_PERCENT 50 //事件需要内存的概率
 #define MY_ALLOC_TIME 2 //申请堆栈所需的时间片个数
 
-#define DEBUG
+// #define DEBUG
 
 //事件类型
 enum EventTypes {
