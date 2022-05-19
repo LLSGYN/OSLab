@@ -1,4 +1,4 @@
-ï»¿#include "File.h"
+#include "File.h"
 #include "Disk.h"
 
 #include <string.h>
@@ -8,78 +8,101 @@
 #define NUMREADER 5
 #define UNUSED -1
 
-dirTable* rootDirTable; //æ ¹ç›®å½•
-dirTable* currentDirTable;  //å½“å‰ä½ç½®
-char path[200]; //ä¿å­˜å½“å‰ç»å¯¹è·¯å¾„
+dirTable* rootDirTable; //¸ùÄ¿Â¼
+dirTable* currentDirTable;  //µ±Ç°Î»ÖÃ
+char path[200]; //±£´æµ±Ç°¾ø¶ÔÂ·¾¶
 
-//TODOï¼šå°†æ–‡ä»¶ç³»ç»Ÿæ“ä½œéƒ½åœ¨å†…å­˜pageä¸­è¿›è¡Œï¼Œç£ç›˜ç³»ç»Ÿè´Ÿè´£ç®¡ç†è¯»é¡µã€å†™é¡µï¼Œå¹¶å¯¹æ¥ä¸Šè°ƒæ¢ï¼›
+//TODO£º½«ÎÄ¼şÏµÍ³²Ù×÷¶¼ÔÚÄÚ´æpageÖĞ½øĞĞ£¬´ÅÅÌÏµÍ³¸ºÔğ¹ÜÀí¶ÁÒ³¡¢Ğ´Ò³£¬²¢¶Ô½ÓÉÏµ÷»»£»
 
 
-//åˆå§‹åŒ–æ ¹ç›®å½•
+//³õÊ¼»¯¸ùÄ¿Â¼
 void initRootDir()
 {
-	//åˆ†é…ä¸€ä¸ªç›˜å—ç©ºé—´ç»™rootDirTable
+	//·ÖÅäÒ»¸öÅÌ¿é¿Õ¼ä¸ørootDirTable
 	int startBlock = getBlock(1);
 	if (startBlock == -1)
 		return;
-	rootDirTable = (dirTable*)readBlock(startBlock);
-	printf("rootDir block:%d\n", startBlock);
-	printf("%p\n", rootDirTable);
+	char* page = (char*)malloc(block_szie);
+	readBlock(startBlock, page);
+	rootDirTable = (dirTable*)page;
+	//printf("rootDir block:%d\n", startBlock);
+	//printf("%p\n", rootDirTable);
 	rootDirTable->dirUnitAmount = 0;
 	rootDirTable->startBlock = startBlock;
-	//å°†è‡ªèº«ä½œä¸ºçˆ¶çº§ç›®å½•
+	//½«×ÔÉí×÷Îª¸¸¼¶Ä¿Â¼
 	//addDirUnit(rootDirTable, "..", 0, startBlock);
 
 	currentDirTable = rootDirTable;
-	//åˆå§‹åŒ–åˆå§‹ç»å¯¹è·¯å¾„
+	//³õÊ¼»¯³õÊ¼¾ø¶ÔÂ·¾¶
 	path[0] = '/';
 	path[1] = '\0';
 }
 
 
-//è·å¾—ç»å¯¹è·¯å¾„
+//»ñµÃ¾ø¶ÔÂ·¾¶
 char* getPath()
 {
 	return path;
 }
 
 
-//å±•ç¤ºå½“å‰ç›®å½• ls
+//Õ¹Ê¾µ±Ç°Ä¿Â¼ ls
 void showDir()
 {
-	printf("rootDirTable: %p\n", rootDirTable);
-	printf("currentDirTable: %p\n", currentDirTable);
 	int unitAmount = currentDirTable->dirUnitAmount;
 	printf("total:%d\n", unitAmount);
 	printf("name\ttype\tsize\tFCB\tdataStartBlock\n");
-	//éå†æ‰€æœ‰è¡¨é¡¹
+	//±éÀúËùÓĞ±íÏî
 	for (int i = 0; i < unitAmount; i++)
 	{
-		//è·å–ç›®å½•é¡¹
+		//»ñÈ¡Ä¿Â¼Ïî
 		dirUnit unitTemp = currentDirTable->dirs[i];
-		printf("%s\t%d\t", unitTemp.fileName, unitTemp.type);
-		//è¯¥è¡¨é¡¹æ˜¯æ–‡ä»¶ï¼Œç»§ç»­è¾“å‡ºå¤§å°å’Œèµ·å§‹ç›˜å—å·
-		if (unitTemp.type == 1)
+
+		char fileType[5] = { 0 };
+
+		if (unitTemp.type == FILE) {
+			strcpy(fileType, "File");
+		}
+		else if (unitTemp.type == LINKFILE) {
+			strcpy(fileType, "Link");
+		}
+		else {
+			strcpy(fileType, "Dir");
+		}
+
+		printf("%s\t%s\t", unitTemp.fileName, fileType);
+
+		
+		
+		//¸Ã±íÏîÊÇÎÄ¼ş£¬¼ÌĞøÊä³ö´óĞ¡ºÍÆğÊ¼ÅÌ¿éºÅ
+		if (unitTemp.type == FILE || unitTemp.type == LINKFILE)
 		{
 			int FCBBlock = unitTemp.startBlock;
-			FCB* fileFCB = (FCB*)readBlock(FCBBlock);
+			char* page = (char*)malloc(block_szie);
+			readBlock(FCBBlock, page);
+			FCB* fileFCB = (FCB*)page;	
+
 			printf("%d\t%d\t%d\n", fileFCB->fileSize, FCBBlock, fileFCB->blockNum);
 		}
 		else {
 			int dirBlock = unitTemp.startBlock;
-			dirTable* myTable = (dirTable*)readBlock(dirBlock);
+			char* page = (char*)malloc(block_szie);
+			readBlock(dirBlock, page);
+			dirTable* myTable = (dirTable*)page;
+
+
 			printf("%d\t%d\n", myTable->dirUnitAmount, unitTemp.startBlock);
 		}
 	}
 }
 
 
-//åˆ‡æ¢ç›®å½• cd
+//ÇĞ»»Ä¿Â¼ cd
 int changeDir(char dirName[])
 {
-	//ç›®å½•é¡¹åœ¨ç›®å½•ä½ç½®
+	//Ä¿Â¼ÏîÔÚÄ¿Â¼Î»ÖÃ
 	int unitIndex = findUnitInTable(currentDirTable, dirName);
-	//ä¸å­˜åœ¨
+	//²»´æÔÚ
 	if (unitIndex == -1)
 	{
 		printf("file not found\n");
@@ -90,13 +113,15 @@ int changeDir(char dirName[])
 		printf("not a dir\n");
 		return -1;
 	}
-	//ä¿®æ”¹å½“å‰ç›®å½•
+	//ĞŞ¸Äµ±Ç°Ä¿Â¼
 	int dirBlock = currentDirTable->dirs[unitIndex].startBlock;
-	currentDirTable = (dirTable*)readBlock(dirBlock);
-	//ä¿®æ”¹å…¨å±€ç»å¯¹è·¯å¾„
+	char* page = (char*)malloc(block_szie);
+	readBlock(dirBlock, page);
+	currentDirTable = (dirTable*)page;
+	//ĞŞ¸ÄÈ«¾Ö¾ø¶ÔÂ·¾¶
 	if (strcmp(dirName, "..") == 0)
 	{
-		//å›é€€ç»å¯¹è·¯å¾„
+		//»ØÍË¾ø¶ÔÂ·¾¶
 		int len = strlen(path);
 		for (int i = len - 2; i >= 0; i--)
 			if (path[i] == '/')
@@ -115,7 +140,7 @@ int changeDir(char dirName[])
 
 
 
-//ä¿®æ”¹æ–‡ä»¶åæˆ–è€…ç›®å½•å mv
+//ĞŞ¸ÄÎÄ¼şÃû»òÕßÄ¿Â¼Ãû mv
 int changeName(char oldName[], char newName[])
 {
 	int unitIndex = findUnitInTable(currentDirTable, oldName);
@@ -125,65 +150,106 @@ int changeName(char oldName[], char newName[])
 		return -1;
 	}
 	strcpy(currentDirTable->dirs[unitIndex].fileName, newName);
+
+	//uncomment if mem swap ready
+	writeBlock(currentDirTable->startBlock, currentDirTable);
+
 	return 0;
 }
 
 
-//******************åˆ›å»ºå’Œåˆ é™¤æ–‡ä»¶********************
-//åˆ›å»ºæ–‡ä»¶ touch
+//******************´´½¨ºÍÉ¾³ıÎÄ¼ş********************
+//´´½¨ÎÄ¼ş touch
 int creatFile(char fileName[], int fileSize)
 {
-	//æ£€æµ‹æ–‡ä»¶åå­—é•¿åº¦
+	//¼ì²âÎÄ¼şÃû×Ö³¤¶È
 	if (strlen(fileName) >= NUM)
 	{
 		printf("file name too long\n");
 		return -1;
 	}
-	//è·å¾—FCBçš„ç©ºé—´
+
+	//ÊÇ·ñ´æÔÚÍ¬ÃûÎÄ¼ş
+	if (findUnitInTable(currentDirTable, fileName) != -1)
+	{
+		printf("file already exist\n");
+		return -1;
+	}
+
+	//»ñµÃFCBµÄ¿Õ¼ä
 	int FCBBlock = getBlock(1);
 	if (FCBBlock == -1)
 		return -1;
-	//è·å–æ–‡ä»¶æ•°æ®ç©ºé—´
+	//»ñÈ¡ÎÄ¼şÊı¾İ¿Õ¼ä
 	int FileBlock = getBlock(fileSize);
 	if (FileBlock == -1)
 		return -1;
-	//åˆ›å»ºFCB
+	//´´½¨FCB
 	if (creatFCB(FCBBlock, FileBlock, fileSize) == -1)
 		return -1;
-	//æ·»åŠ åˆ°ç›®å½•é¡¹
+	//Ìí¼Óµ½Ä¿Â¼Ïî
 	if (addDirUnit(currentDirTable, fileName, 1, FCBBlock) == -1)
 		return -1;
 
 	return 0;
 }
 
-//ä¸ºæ–‡ä»¶file1æ·»åŠ ä¸€ä¸ªåä¸ºfile2çš„é“¾æ¥ï¼Œä»–ä»¬æŒ‡å‘åŒä¸€ä¸ªFCB
+//ÎªÎÄ¼şfile1Ìí¼ÓÒ»¸öÃûÎªfile2µÄÁ´½Ó£¬ËûÃÇÖ¸ÏòÍ¬Ò»¸öFCB
 int linkfile(char* file1, char* file2) {
-	FCB* myFCB = my_open(file1);
-	if (strlen(file2) >= NUM)
+	//²éÕÒÎÄ¼şµÄÄ¿Â¼ÏîÎ»ÖÃ
+	int unitIndex = findUnitInTable(currentDirTable, file1);
+	if (unitIndex == -1)
 	{
-		printf("file name too long\n");
+		printf("file not found\n");
 		return -1;
 	}
-	if (addDirUnit(currentDirTable, file2, 1, myFCB->blockNum) == -1)
+	dirUnit myUnit = currentDirTable->dirs[unitIndex];
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type == FILE)
+	{
+		FCB* myFCB = my_open(file1);
+		if (strlen(file2) >= NUM)
+		{
+			printf("file name too long\n");
+			return -1;
+		}
+		myFCB->link++;
+
+		if (addDirUnit(currentDirTable, file2, LINKFILE, myFCB->startBlock) == -1)
+			return -1;
+
+		//uncomment if mem swap ready
+		writeBlock(myFCB->startBlock, myFCB);
+	}
+	else if (myUnit.type == DIRECTORY) {
+		printf("to link a directory is currently not supported \n");
 		return -1;
-	myFCB->link++;
+	}
+	else {
+		printf("to link a link file is currently not supported \n");
+		return -1;
+	}
+	
+	
 	return 0;
 }
 
 
 
 
-//åˆ›å»ºFCB
+//´´½¨FCB
 int creatFCB(int fcbBlockNum, int fileBlockNum, int fileSize)
 {
-	//æ‰¾åˆ°fcbçš„å­˜å‚¨ä½ç½®
-	FCB* currentFCB = (FCB*)readBlock(fcbBlockNum);
-	currentFCB->blockNum = fileBlockNum;//æ–‡ä»¶æ•°æ®èµ·å§‹ä½ç½®
-	currentFCB->fileSize = fileSize;//æ–‡ä»¶å¤§å°
-	currentFCB->link = 1;//æ–‡ä»¶é“¾æ¥æ•°
-	currentFCB->dataSize = 0;//æ–‡ä»¶å·²å†™å…¥æ•°æ®é•¿åº¦
-	currentFCB->readptr = 0;//æ–‡ä»¶è¯»æŒ‡é’ˆ
+	//ÕÒµ½fcbµÄ´æ´¢Î»ÖÃ
+	char* page = (char*)malloc(block_szie);
+	readBlock(fcbBlockNum, page);
+	FCB* currentFCB = (FCB*)page;
+	currentFCB->startBlock = fcbBlockNum;
+	currentFCB->blockNum = fileBlockNum;//ÎÄ¼şÊı¾İÆğÊ¼Î»ÖÃ
+	currentFCB->fileSize = fileSize;//ÎÄ¼ş´óĞ¡
+	currentFCB->link = 1;//ÎÄ¼şÁ´½ÓÊı
+	currentFCB->dataSize = 0;//ÎÄ¼şÒÑĞ´ÈëÊı¾İ³¤¶È
+	currentFCB->readptr = 0;//ÎÄ¼ş¶ÁÖ¸Õë
 
 
 	currentFCB->count_sem = sem_open("count_sem", O_CREAT, 0644, NUMREADER);
@@ -198,89 +264,98 @@ int creatFCB(int fcbBlockNum, int fileBlockNum, int fileSize)
 		perror("sem_open error");
 		exit(1);
 	}
+
+	//Comment if mem swap ready
+	writeBlock(fcbBlockNum, currentFCB);
+
 	return 0;
 }
 
-//åˆ›å»ºç›®å½• mkdir
+//´´½¨Ä¿Â¼ mkdir
 int creatDir(char dirName[])
 {
-	printf("rootDirTable:    %p\n", rootDirTable);
-	printf("currentDirTable: %p\n", currentDirTable);
-	printf("rootDirTableBlock:    %d\n", rootDirTable->startBlock);
-	printf("currentDirTableBlock: %d\n", currentDirTable->startBlock);
+	//¼ì²éÎÄ¼şÃûÊÇ·ñ¹ı³¤
 	if (strlen(dirName) >= NUM)
 	{
 		printf("file name too long\n");
 		return -1;
 	}
-	//ä¸ºç›®å½•è¡¨åˆ†é…ç©ºé—´
+	//ÊÇ·ñ´æÔÚÍ¬ÃûÎÄ¼ş
+	if (findUnitInTable(currentDirTable, dirName) != -1)
+	{
+		printf("file already exist\n");
+		return -1;
+	}
+	//ÎªÄ¿Â¼±í·ÖÅä¿Õ¼ä
 	int dirBlock = getBlock(1);
-	printf("dirBlock in createDir: %d\n", dirBlock);
+	//printf("dirBlock in createDir: %d\n", dirBlock);
 	if (dirBlock == -1)
 		return -1;
-	//å°†ç›®å½•ä½œä¸ºç›®å½•é¡¹æ·»åŠ åˆ°å½“å‰ç›®å½•
+	//½«Ä¿Â¼×÷ÎªÄ¿Â¼ÏîÌí¼Óµ½µ±Ç°Ä¿Â¼
 	if (addDirUnit(currentDirTable, dirName, 0, dirBlock) == -1)
 		return -1;
-	//ä¸ºæ–°å»ºçš„ç›®å½•æ·»åŠ ä¸€ä¸ªåˆ°çˆ¶ç›®å½•çš„ç›®å½•é¡¹
-	dirTable* newTable = (dirTable*)readBlock(dirBlock);
+	//ÎªĞÂ½¨µÄÄ¿Â¼Ìí¼ÓÒ»¸öµ½¸¸Ä¿Â¼µÄÄ¿Â¼Ïî
+	char* page = (char*)malloc(block_szie);
+	readBlock(dirBlock, page);
+	dirTable* newTable = (dirTable*)page;
 	newTable->startBlock = dirBlock;
 	newTable->dirUnitAmount = 0;
 	char parent[] = "..";
-	if (addDirUnit(newTable, parent, 0, currentDirTable->startBlock) == -1) {
+	if (addDirUnit(newTable, parent, DIRECTORY, currentDirTable->startBlock) == -1) {
 		printf("addDirUnit Failed");
 		return -1;
 	}
-		
-	printf("rootDirTable:    %p\n", rootDirTable);
-	printf("currentDirTable: %p\n", currentDirTable);
 	return 0;
 }
 
-//æ·»åŠ ç›®å½•é¡¹
+//Ìí¼ÓÄ¿Â¼Ïî
 int addDirUnit(dirTable* myDirTable, char fileName[], int type, int FCBBlockNum)
 {
-	printf("DirTable in addDirUnit: %p\n", myDirTable);
-	//è·å¾—ç›®å½•è¡¨
+	//printf("DirTable in addDirUnit: %p\n", myDirTable);
+	//»ñµÃÄ¿Â¼±í
 	int dirUnitAmount = myDirTable->dirUnitAmount;
-	//æ£€æµ‹ç›®å½•è¡¨ç¤ºæ˜¯å¦å·²æ»¡
+	//¼ì²âÄ¿Â¼±íÊ¾ÊÇ·ñÒÑÂú
 	if (dirUnitAmount == DIRTABLE_MAX_SIZE)
 	{
 		printf("dirTables is full, try to delete some file\n");
 		return -1;
 	}
 
-	//æ˜¯å¦å­˜åœ¨åŒåæ–‡ä»¶
+	//ÊÇ·ñ´æÔÚÍ¬ÃûÎÄ¼ş
 	if (findUnitInTable(myDirTable, fileName) != -1)
 	{
 		printf("file already exist\n");
 		return -1;
 	}
-	//æ„å»ºæ–°ç›®å½•é¡¹
-	printf("myDirTable %p", &myDirTable);
+	//¹¹½¨ĞÂÄ¿Â¼Ïî
+
 	dirUnit* newDirUnit = &myDirTable->dirs[dirUnitAmount];
-	myDirTable->dirUnitAmount++;//å½“å‰ç›®å½•è¡¨çš„ç›®å½•é¡¹æ•°é‡+1
-	//è®¾ç½®æ–°ç›®å½•é¡¹å†…å®¹
-	
+	myDirTable->dirUnitAmount++;//µ±Ç°Ä¿Â¼±íµÄÄ¿Â¼ÏîÊıÁ¿+1
+	//ÉèÖÃĞÂÄ¿Â¼ÏîÄÚÈİ
+
 	strcpy(newDirUnit->fileName, fileName);
-	
+
 	newDirUnit->type = type;
 	newDirUnit->startBlock = FCBBlockNum;
-	printf("fileName, type:%s %s\n", newDirUnit->fileName, newDirUnit->type);
+	//printf("fileName, type:%s %c\n", newDirUnit->fileName, newDirUnit->type);
+
+	//Comment if mem swap ready
 	writeBlock(myDirTable->startBlock, myDirTable);
+	
 	return 0;
 }
 
 
-//åˆ é™¤æ–‡ä»¶ rm
+//É¾³ıÎÄ¼ş rm
 int deleteFile(char fileName[])
 {
-	//å¿½ç•¥ç³»ç»Ÿçš„è‡ªåŠ¨åˆ›å»ºçš„çˆ¶ç›®å½•
+	//ºöÂÔÏµÍ³µÄ×Ô¶¯´´½¨µÄ¸¸Ä¿Â¼
 	if (strcmp(fileName, "..") == 0)
 	{
 		printf("can't delete ..\n");
 		return -1;
 	}
-	//æŸ¥æ‰¾æ–‡ä»¶çš„ç›®å½•é¡¹ä½ç½®
+	//²éÕÒÎÄ¼şµÄÄ¿Â¼ÏîÎ»ÖÃ
 	int unitIndex = findUnitInTable(currentDirTable, fileName);
 	if (unitIndex == -1)
 	{
@@ -288,44 +363,79 @@ int deleteFile(char fileName[])
 		return -1;
 	}
 	dirUnit myUnit = currentDirTable->dirs[unitIndex];
-	//åˆ¤æ–­ç±»å‹
-	if (myUnit.type == 0)//ç›®å½•
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type != FILE)
 	{
 		printf("not a file\n");
 		return -1;
 	}
 	int FCBBlock = myUnit.startBlock;
-	//é‡Šæ”¾å†…å­˜
+	//ÊÍ·ÅÄÚ´æ
 	releaseFile(FCBBlock);
-	//ä»ç›®å½•è¡¨ä¸­å‰”é™¤
+	//´ÓÄ¿Â¼±íÖĞÌŞ³ı
 	deleteDirUnit(currentDirTable, unitIndex);
+
+	//comment if mem swap ready
+	writeBlock(currentDirTable->startBlock, currentDirTable);
+
 	return 0;
 }
 
-//åˆ é™¤é“¾æ¥
-int deletelink(char* file) { //ç§»é™¤ä¸€ä¸ªæ–‡ä»¶
-	FCB* myFCB = my_open(file);
+//É¾³ıÁ´½Ó
+int deletelink(char* fileName) { //ÒÆ³ıÒ»¸ölink
+	//ºöÂÔÏµÍ³µÄ×Ô¶¯´´½¨µÄ¸¸Ä¿Â¼
+	if (strcmp(fileName, "..") == 0)
+	{
+		printf("can't delete ..\n");
+		return -1;
+	}
+	//²éÕÒÎÄ¼şµÄÄ¿Â¼ÏîÎ»ÖÃ
+	int unitIndex = findUnitInTable(currentDirTable, fileName);
+	if (unitIndex == -1)
+	{
+		printf("link file not found\n");
+		return -1;
+	}
+	dirUnit myUnit = currentDirTable->dirs[unitIndex];
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type != LINKFILE)
+	{
+		printf("not a link file\n");
+		return -1;
+	}
+
+	FCB* myFCB = my_open(fileName);
+
 	if (myFCB->link < 2) {
+		printf("link num below 2\n");
 		return -1;
 	}
 	myFCB->link--;
-	int unitIndex = findUnitInTable(currentDirTable, file);
+	
+	/*int unitIndex = findUnitInTable(currentDirTable, fileName);
+	printf("unitIndex:%d", unitIndex);*/
 	deleteDirUnit(currentDirTable, unitIndex);
+
+	//comment if mem swap ready
+	writeBlock(currentDirTable->startBlock, currentDirTable);
+
 	return 0;
 }
 
-//é‡Šæ”¾æ–‡ä»¶å†…å­˜
+//ÊÍ·ÅÎÄ¼şÄÚ´æ
 int releaseFile(int FCBBlock)
 {
-	FCB* myFCB = (FCB*)readBlock(FCBBlock);
-	myFCB->link--;  //é“¾æ¥æ•°å‡ä¸€
-	//æ— é“¾æ¥ï¼Œåˆ é™¤æ–‡ä»¶
+	char* page = (char*)malloc(block_szie);
+	readBlock(FCBBlock, page);
+	FCB* myFCB = (FCB*)page;
+	myFCB->link--;  //Á´½ÓÊı¼õÒ»
+	//ÎŞÁ´½Ó£¬É¾³ıÎÄ¼ş
 	if (myFCB->link == 0)
 	{
-		//é‡Šæ”¾æ–‡ä»¶çš„æ•°æ®ç©ºé—´
+		//ÊÍ·ÅÎÄ¼şµÄÊı¾İ¿Õ¼ä
 		releaseBlock(myFCB->blockNum, myFCB->fileSize);
 	}
-	//é‡Šæ”¾FCBçš„ç©ºé—´
+	//ÊÍ·ÅFCBµÄ¿Õ¼ä
 	sem_close(myFCB->count_sem);
 	sem_close(myFCB->write_sem);
 	sem_unlink("count_sem");
@@ -335,10 +445,10 @@ int releaseFile(int FCBBlock)
 }
 
 
-//åˆ é™¤ç›®å½•é¡¹
+//É¾³ıÄ¿Â¼Ïî
 int deleteDirUnit(dirTable* myDirTable, int unitIndex)
 {
-	//è¿ç§»è¦†ç›–
+	//Ç¨ÒÆ¸²¸Ç
 	int dirUnitAmount = myDirTable->dirUnitAmount;
 	for (int i = unitIndex; i < dirUnitAmount - 1; i++)
 	{
@@ -349,16 +459,16 @@ int deleteDirUnit(dirTable* myDirTable, int unitIndex)
 }
 
 
-//åˆ é™¤ç›®å½• rmdir
+//É¾³ıÄ¿Â¼ rmdir
 int deleteDir(char dirName[])
 {
-	//å¿½ç•¥ç³»ç»Ÿçš„è‡ªåŠ¨åˆ›å»ºçš„çˆ¶ç›®å½•
+	//ºöÂÔÏµÍ³µÄ×Ô¶¯´´½¨µÄ¸¸Ä¿Â¼
 	if (strcmp(dirName, "..") == 0)
 	{
 		printf("can't delete ..\n");
 		return -1;
 	}
-	//æŸ¥æ‰¾æ–‡ä»¶
+	//²éÕÒÎÄ¼ş
 	int unitIndex = findUnitInTable(currentDirTable, dirName);
 	if (unitIndex == -1)
 	{
@@ -366,71 +476,93 @@ int deleteDir(char dirName[])
 		return -1;
 	}
 	dirUnit myUnit = currentDirTable->dirs[unitIndex];
-	//åˆ¤æ–­ç±»å‹
-	if (myUnit.type == 0)//ç›®å½•
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type == DIRECTORY)//Ä¿Â¼
 	{
 		deleteFileInTable(currentDirTable, unitIndex);
 	}
 	else {
-		printf("not a dir\n");
+		printf("not a directory\n");
 		return -1;
 	}
-	//ä»ç›®å½•è¡¨ä¸­å‰”é™¤
+	//´ÓÄ¿Â¼±íÖĞÌŞ³ı
 	deleteDirUnit(currentDirTable, unitIndex);
+
+	//comment if mem swap ready
+	writeBlock(currentDirTable->startBlock, currentDirTable);
+
 	return 0;
 }
 
 
-//åˆ é™¤æ–‡ä»¶/ç›®å½•é¡¹
+//É¾³ıÎÄ¼ş/Ä¿Â¼Ïî
 int deleteFileInTable(dirTable* myDirTable, int unitIndex)
 {
-	//æŸ¥æ‰¾æ–‡ä»¶
+	//²éÕÒÎÄ¼ş
 	dirUnit myUnit = myDirTable->dirs[unitIndex];
-	//åˆ¤æ–­ç±»å‹
-	if (myUnit.type == 0)//ç›®å½•
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type == 0)//Ä¿Â¼
 	{
-		//æ‰¾åˆ°ç›®å½•ä½ç½®
+		//ÕÒµ½Ä¿Â¼Î»ÖÃ
 		int FCBBlock = myUnit.startBlock;
-		dirTable* table = (dirTable*)readBlock(FCBBlock);
-		//é€’å½’åˆ é™¤ç›®å½•ä¸‹çš„æ‰€æœ‰æ–‡ä»¶
-		printf("cycle delete dir %s\n", myUnit.fileName);
+		char* page = (char*)malloc(block_szie);
+		readBlock(FCBBlock, page);
+		dirTable* table = (dirTable*)page;
+		//µİ¹éÉ¾³ıÄ¿Â¼ÏÂµÄËùÓĞÎÄ¼ş
+		printf("recursively delete files in dir %s\n", myUnit.fileName);
 		int unitCount = table->dirUnitAmount;
-		for (int i = 1; i < unitCount; i++)//å¿½ç•¥â€œ..â€
+		for (int i = 1; i < unitCount; i++)//ºöÂÔ¡°..¡±
 		{
 			printf("delete %s\n", table->dirs[i].fileName);
 			deleteFileInTable(table, i);
 		}
-		//é‡Šæ”¾ç›®å½•è¡¨ç©ºé—´
+		//ÊÍ·ÅÄ¿Â¼±í¿Õ¼ä
 		releaseBlock(FCBBlock, 1);
+
 	}
-	else {//æ–‡ä»¶
-	   //é‡Šæ”¾æ–‡ä»¶å†…å­˜
+	else {//ÎÄ¼ş
+	   //ÊÍ·ÅÎÄ¼şÄÚ´æ
 		int FCBBlock = myUnit.startBlock;
 		releaseFile(FCBBlock);
 	}
+
+	//comment if mem swap ready
+	writeBlock(myDirTable->startBlock, myDirTable);
+
 	return 0;
 }
 
 
 
-//**********************è¯»å†™æ“ä½œ*******************
+//**********************¶ÁĞ´²Ù×÷*******************
 FCB* my_open(char fileName[])
 {
 	int unitIndex = findUnitInTable(currentDirTable, fileName);
 	if (unitIndex == -1)
 	{
-		printf("file no found\n");
+		printf("File no found\n");
 		return NULL;
 	}
-	//æ§åˆ¶å—
+
+	dirUnit myUnit = currentDirTable->dirs[unitIndex];
+	//ÅĞ¶ÏÀàĞÍ
+	if (myUnit.type != FILE)
+	{
+		printf("Cannot write: Not a file.\n");
+		return NULL;
+	}
+
+	//¿ØÖÆ¿é
 	int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
 	//printf("startBlock%d", FCBBlock);
-	FCB* myFCB = (FCB*)readBlock(FCBBlock);
+	char* page = (char*)malloc(block_szie);
+	readBlock(FCBBlock, page);
+	FCB* myFCB = (FCB*)page;
 	return myFCB;
 }
 
 
-//è¯»æ–‡ä»¶
+//¶ÁÎÄ¼ş
 int my_read(FCB* myFCB, int length)
 {
 	//int unitIndex = findUnitInTable(currentDirTable, fileName);
@@ -439,56 +571,69 @@ int my_read(FCB* myFCB, int length)
 	//	printf("file no found\n");
 	//	return -1;
 	//}
-	////æ§åˆ¶å—
+	////¿ØÖÆ¿é
 	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
 	//FCB* myFCB = (FCB*)readBlock(FCBBlock);
-	myFCB->readptr = 0; //æ–‡ä»¶æŒ‡é’ˆé‡ç½®
-	//è¯»æ•°æ®
-	char* data = (char*)readBlock(myFCB->blockNum);
-	int val;
+	myFCB->readptr = 0; //ÎÄ¼şÖ¸ÕëÖØÖÃ
+	//¶ÁÊı¾İ
+	char* page = (char*)malloc(block_szie);
+	readBlock(myFCB->blockNum, page);
+	char* data = (char*)page;
+	
 	myFCB->count_sem = sem_open("count_sem", O_CREAT, UNUSED, 0);
-	/* è·å–è®°å½•è¯»è€…æ•°é‡çš„é” */
+	/* »ñÈ¡¼ÇÂ¼¶ÁÕßÊıÁ¿µÄËø */
+	int val;
 	if (sem_wait(myFCB->count_sem) == -1)
 		perror("sem_wait error");
+	/* ¸ù¾İÓµÓĞËøµÄ½ø³ÌÊıÁ¿À´ÅĞ¶ÏÊÇ·ñÊÇµÚÒ»¸ö¶ÁÕß */
+	/* Èç¹ûÊÇµÚÒ»¸ö¶ÁÕß¾Í¸ºÔğËøÉÏĞ´ÕßËø */
 	sem_getvalue(myFCB->count_sem, &val);
 	//printf("count_sem val:%d\n", val);
-	/* æ ¹æ®æ‹¥æœ‰é”çš„è¿›ç¨‹æ•°é‡æ¥åˆ¤æ–­æ˜¯å¦æ˜¯ç¬¬ä¸€ä¸ªè¯»è€… */
-	/* å¦‚æœæ˜¯ç¬¬ä¸€ä¸ªè¯»è€…å°±è´Ÿè´£é”ä¸Šå†™è€…é” */
 	if (val == NUMREADER - 1)
 	{
 		myFCB->write_sem = sem_open("write_sem", O_CREAT, UNUSED, 0);
-		//int val;
-		//sem_getvalue(myFCB->write_sem, &val);
-		//printf("write_sem val:%d\n", val);// 1ï¼Œå½“å‰æ— äººå†™ï¼Œé”ä¸Š
+		int val;
+		sem_getvalue(myFCB->write_sem, &val);
+		//printf("write_sem val:%d\n", val);// 1£¬µ±Ç°ÎŞÈËĞ´£¬ËøÉÏ
+
 		if (sem_wait(myFCB->write_sem) == -1)
 			perror("sem_wait error");
 	}
 
 	int dataSize = myFCB->dataSize;
 	/* printf("myFCB->dataSize = %d\n", myFCB->dataSize); */
-	//åœ¨ä¸è¶…å‡ºæ•°æ®é•¿åº¦ä¸‹ï¼Œè¯»å–æŒ‡å®šé•¿åº¦çš„æ•°æ®
+	//ÔÚ²»³¬³öÊı¾İ³¤¶ÈÏÂ£¬¶ÁÈ¡Ö¸¶¨³¤¶ÈµÄÊı¾İ
+	if (length == -1) {
+		length = dataSize;
+	}
 	for (int i = 0; i < length && myFCB->readptr < dataSize; i++, myFCB->readptr++)
 	{
 		printf("%c", *(data + myFCB->readptr));
 	}
-	if (myFCB->readptr == dataSize)//è¯»åˆ°æ–‡ä»¶æœ«å°¾ç”¨#è¡¨ç¤º
+	if (myFCB->readptr == dataSize)//¶Áµ½ÎÄ¼şÄ©Î²ÓÃ#±íÊ¾
 		printf("#");
-	/* ä¸‹é¢ä¸¤è¡Œåªæ˜¯ä¸ºäº†æ¨¡æ‹Ÿç¼–è¾‘å™¨çš„å…³é—­ä¹‹å‰çš„æƒ…å†µï¼Œ */
-	/* è¿™æ ·å°±èƒ½æ§åˆ¶è¿›ç¨‹ä¸ä¼šç«‹å³é‡Šæ”¾é” */
+	/* ÏÂÃæÁ½ĞĞÖ»ÊÇÎªÁËÄ£Äâ±à¼­Æ÷µÄ¹Ø±ÕÖ®Ç°µÄÇé¿ö£¬ */
+	/* ÕâÑù¾ÍÄÜ¿ØÖÆ½ø³Ì²»»áÁ¢¼´ÊÍ·ÅËø */
 	printf("\ninput a character to end up reading....\n");
 	getchar();
-	/* å¦‚æœæ˜¯æœ€åä¸€ä¸ªè¯»è€…å°±è´Ÿè´£é‡Šæ”¾è¯»è€…é” */
+	
+	sem_post(myFCB->count_sem);
+
+	/* Èç¹ûÊÇ×îºóÒ»¸ö¶ÁÕß¾Í¸ºÔğÊÍ·ÅĞ´ÕßËø */
+	// Need debugging here
+	sem_getvalue(myFCB->count_sem, &val);
+	/*printf("count_sem val:%d\n", val);*/
 	if (val == NUMREADER)
 	{
 		sem_post(myFCB->write_sem);
 	}
-	sem_post(myFCB->count_sem);
 	printf("\n");
+
 	return 0;
 }
 
 
-//å†™æ–‡ä»¶ï¼Œä»æœ«å°¾å†™å…¥ write
+//Ğ´ÎÄ¼ş£¬´ÓÄ©Î²Ğ´Èë write
 int my_write(FCB* myFCB, char content[])
 {
 	//int unitIndex = findUnitInTable(currentDirTable, fileName);
@@ -497,45 +642,55 @@ int my_write(FCB* myFCB, char content[])
 	//	printf("file no found\n");
 	//	return -1;
 	//}
-	////æ§åˆ¶å—
+	////¿ØÖÆ¿é
 	//int FCBBlock = currentDirTable->dirs[unitIndex].startBlock;
 	//FCB* myFCB = (FCB*)readBlock(FCBBlock);
-	myFCB->dataSize = 0; 
-	myFCB->readptr = 0; 
+
+	//uncomment if write from begin
+	//myFCB->dataSize = 0;
+	//myFCB->readptr = 0;
+
 	int contentLen = strlen(content);
 	int fileSize = myFCB->fileSize * block_szie;
-	char* data = (char*)readBlock(myFCB->blockNum);
+	char* page = (char*)malloc(block_szie);
+	readBlock(myFCB->blockNum, page);
+	char* data = (char*)page;
 	myFCB->write_sem = sem_open("write_sem", O_CREAT, UNUSED, 0);
-	/* è·å¾—å†™è€…é” */
+	/* »ñµÃĞ´ÕßËø */
 	if (sem_wait(myFCB->write_sem) == -1)
 		perror("sem_wait error");
-	//åœ¨ä¸è¶…å‡ºæ–‡ä»¶çš„å¤§å°çš„èŒƒå›´å†…å†™å…¥
+	//ÔÚ²»³¬³öÎÄ¼şµÄ´óĞ¡µÄ·¶Î§ÄÚĞ´Èë
 	for (int i = 0; i < contentLen && myFCB->dataSize < fileSize; i++, myFCB->dataSize++)
 	{
 		*(data + myFCB->dataSize) = content[i];
 	}
-	/* æ¨¡æ‹Ÿç¼–è¾‘å™¨,æ§åˆ¶å†™è€…ä¸ç«‹å³é€€å‡º */
+	/* Ä£Äâ±à¼­Æ÷,¿ØÖÆĞ´Õß²»Á¢¼´ÍË³ö */
 	printf("input a character to end up waiting....\n");
 	getchar();
-	/* é‡Šæ”¾å†™è€…é” */
+	/* ÊÍ·ÅĞ´ÕßËø */
 	sem_post(myFCB->write_sem);
 	if (myFCB->dataSize == fileSize)
 		printf("file is full, can't write in\n");
+	
+	//comment if mem swap ready, rethinking multiple block write?
+	writeBlock(myFCB->blockNum, data);
+
+	//comment if mem swap ready, writing changes the value of datasize in FCB, so we should write it to disk also.
+	writeBlock(myFCB->startBlock, myFCB);
+	
 	return 0;
 }
 
 
 
-//ä»ç›®å½•ä¸­æŸ¥æ‰¾ç›®å½•é¡¹ç›®
+//´ÓÄ¿Â¼ÖĞ²éÕÒÄ¿Â¼ÏîÄ¿
 int findUnitInTable(dirTable* myDirTable, char unitName[])
 {
-	//è·å¾—ç›®å½•è¡¨
+	//»ñµÃÄ¿Â¼±í
 	int dirUnitAmount = myDirTable->dirUnitAmount;
 	int unitIndex = -1;
-	for (int i = 0; i < dirUnitAmount; i++)//æŸ¥æ‰¾ç›®å½•é¡¹ä½ç½®
+	for (int i = 0; i < dirUnitAmount; i++)//²éÕÒÄ¿Â¼ÏîÎ»ÖÃ
 		if (strcmp(unitName, myDirTable->dirs[i].fileName) == 0)
 			unitIndex = i;
 	return unitIndex;
 }
-
-

@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#define system_size 10*1024*1024           //系统大小
+#define system_size 10*1024           //系统大小
 #define block_szie 1024                     //盘块大小
 #define block_count system_size/block_szie  //系统盘块数目
 

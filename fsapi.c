@@ -17,6 +17,9 @@ int findfd() {
 //打开文件，并根据文件名添加文件描述符
 int createfd(char fileName[]) {
     FCB* myFCB = my_open(fileName);
+	if (myFCB == NULL) {
+		return -1;
+	}
     int fdnum = findfd();
     FDE[fdnum].flag = 1;
     FDE[fdnum].tagetFCB = myFCB;
@@ -74,7 +77,6 @@ int mkdir(char* dir) {
 //为文件file1 创建一个新的名称(file2)
 int link(char* file1, char* file2) {
     return linkfile(file1, file2);
-
 }
 
 //移除一个文件

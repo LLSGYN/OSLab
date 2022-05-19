@@ -7,6 +7,9 @@
 #include "semaphore.h"
 #include <windows.h>
 
+#define DIRECTORY 0
+#define FILE 1
+#define LINKFILE 2
 
 #define MAXREADER 1
 #define NUM 30
@@ -35,6 +38,7 @@ typedef struct dirTable {
 
 //文件控制块结构：
 typedef struct FCB {
+	int startBlock; //FCB本身存储的块
 	int blockNum;   //文件数据起始盘块号
 	int fileSize;   //文件大小，盘块为单位
 	int dataSize;   //已写入的内容大小，字节为单位
