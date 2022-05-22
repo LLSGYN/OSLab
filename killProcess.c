@@ -18,9 +18,9 @@ void DestoryProcess(int ID)//自然销毁的进程ID
 		toBeKilled[ID] = 1;//更改标志位
 		killQueue[killTail] = ID;//将该进程放到此队列中
 		killTail = (killTail + 1) % MAX_PROCESS;//队尾后移
-#ifdef DEBUG
-		printf("----Process %d will be killed!\n", ID);//打印debug信息
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----Process %d will be killed!\n", ID);//打印debug信息
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		ReleaseSemaphore(killQueueFull, 1, NULL);//该队列中进程数加一
 	}
 
@@ -29,7 +29,9 @@ void DestoryProcess(int ID)//自然销毁的进程ID
 
 void KillProcess(int ID)//强制销毁指定的进程
 {
-	printf("start kill process %d...\n", ID);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "----start kill process %d...\n", ID);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	WaitForSingleObject(killMutex, INFINITE);//获得强制销毁进程的权限
 	WaitForSingleObject(allPCB[ID].processMutex, INFINITE);
 	int nowEID = allPCB[ID].eventID;//待销毁进程正在运行的事件号
@@ -39,44 +41,44 @@ void KillProcess(int ID)//强制销毁指定的进程
 	case createProcess:
 	case occupyCPU:
 	{
-#ifdef DEBUG
-		printf("kill process is in CPU queue...\n");//待删进程处于CPU就绪队列
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----kill process is in CPU queue...\n");//待删进程处于CPU就绪队列
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		WaitForSingleObject(proInCPUMutex, INFINITE);//阻止CPU的运行
 		if (processInCPU == ID)//若待删进程正在运行
 		{
 			processInCPU = -1;//停止运行
-#ifdef DEBUG
-			printf("----CPU released...\n");
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "----CPU released...\n");
+			ReleaseSemaphore(writeMutex, 1, NULL);
 		}
 		ReleaseSemaphore(killMutex, 1, NULL);//释放强制销毁进程的权限
 		KillProFromQueue(&readyQueue, ID);//将该进程从就绪队列删除
-#ifdef DEBUG
-		printf("----remove process %d from readyQueue...\n", ID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----remove process %d from readyQueue...\n", ID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU互斥信号量
 		break;
 	}
 	case occupyIO:
 	{
 		int ioID = allPCB[ID].events[nowEID].eventMsg.IDOfIO;
-#ifdef DEBUG
-		printf("kill process is in IO %d queue...\n", ioID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----kill process is in IO %d queue...\n", ioID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		WaitForSingleObject(proInIOMutex[ioID], INFINITE);
 		if (processInIO[ioID] == ID)
 		{
 			processInIO[ioID] = -1;
-#ifdef DEBUG
-			printf("----IO%d released...\n", ioID);
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "----IO%d released...\n", ioID);
+			ReleaseSemaphore(writeMutex, 1, NULL);
 		}
 		ReleaseSemaphore(killMutex, 1, NULL);//释放该权限
 		KillProFromQueue(&waitIOQueue[ioID], ID);
-#ifdef DEBUG
-		printf("----remove process %d from IOQueue%d...\n", ID, ioID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----remove process %d from IOQueue%d...\n", ID, ioID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		ReleaseSemaphore(proInIOMutex[ioID], 1, NULL);
 		break;
 	}
@@ -85,22 +87,23 @@ void KillProcess(int ID)//强制销毁指定的进程
 	case heapAlloc:
 	case stackAlloc:
 	{
-#ifdef DEBUG
-		printf("kill process is in memory queue...\n");
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----kill process is in memory queue...\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		WaitForSingleObject(proInMemMutex, INFINITE);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (processInCPU == ID)
 		{
 			processInCPU = -1;
-#ifdef DEBUG
-			printf("----Memory released...\n");
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "----Memory released...\n");
+			ReleaseSemaphore(writeMutex, 1, NULL);
 		}
 		ReleaseSemaphore(killMutex, 1, NULL);//释放该权限
 		KillProFromQueue(&memoryQueue, ID);
-#ifdef DEBUG
-		printf("----remove process %d from memoryQueue...\n", ID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "----remove process %d from memoryQueue...\n", ID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		ReleaseSemaphore(proInMemMutex, 1, NULL);
 		break;
 	}
@@ -108,7 +111,7 @@ void KillProcess(int ID)//强制销毁指定的进程
 		break;
 	}
 	ReleaseSemaphore(allPCB[ID].processMutex, 1, NULL);
-	
+
 	DestoryProcess(ID);//将该进程加入待删进程队列
 }
 
@@ -148,7 +151,9 @@ DWORD WINAPI MyKill(LPVOID lpParam)
 		usedProcessID[killID] = 0;//将此进程标识符ID置为空闲
 		processCNT--;//进程总数减一
 		toBeKilled[killID] = 0;//当前ID号已经不在待删队列中
-		printf("\nINFO:process %d is killed!\n", killID);//debug信息
-		printf("$root:");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "\nINFO:process %d is killed!\n", killID);//debug信息
+		ReleaseSemaphore(writeMutex, 1, NULL);
+		// printf("$root:");
 	}
 }

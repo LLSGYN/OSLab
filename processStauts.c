@@ -23,6 +23,7 @@ void showSingleProcess(int pid)
 		printf("fatherProID: %d\n", pcb.fatherProID);
 	printf("priority: %d\n", pcb.priority);
 	printf("nowState: %d\n", pcb.nowState);
+    printf("needRAM: %d\n", pcb.pageNum);
 	printf("eventID: %d\n", pcb.eventID);
 	printf("eventTime: %d\n", pcb.eventTime);
 	printf("eventNum: %d\n", pcb.eventNum);

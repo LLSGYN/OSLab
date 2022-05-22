@@ -6,7 +6,7 @@ void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊı£º¸Ã½ø³ÌËùÔÚµÄ¾ÍĞ÷¶ÓÁĞ ¸
 	int priority_num = allPCB[ID].priority;//¸Ã½ø³ÌµÄÓÅÏÈ¼¶
 	if (allPCB[ID].events[allPCB[ID].eventID].eventType != occupyCPU && allPCB[ID].events[allPCB[ID].eventID].eventType != createProcess)
 		priority_num = 0;//µ±½ø³ÌµÄÊÂ¼ş²»ÊÇCPUÏà¹ØµÄÊ±ºò£¬²»ÂÛ½ø³ÌÓĞÃ»ÓĞÓÅÏÈ¼¶£¬¸Ã½ø³Ì¶¼ÔÚÓÅÏÈ¼¶Îª0µÄÏà¹Ø¾ÍĞ÷¶ÓÁĞÖĞ
-	int pos;//¸Ã½ø³ÌÔÚ¾ÍĞ÷¶ÓÁĞÖĞµÄÎ»ÖÃ
+	int pos = -1;//¸Ã½ø³ÌÔÚ¾ÍĞ÷¶ÓÁĞÖĞµÄÎ»ÖÃ
 	for (int i = curQueue->head[priority_num]; i != curQueue->tail[priority_num]; i = (i + 1) % MAX_PROCESS)//ÕÒ´ıÉ¾½ø³ÌÔÚ¾ÍĞ÷¶ÓÁĞÖĞµÄÎ»ÖÃ£¬´Ó¶ÓÁĞÍ·¿ªÊ¼±éÀú
 	{
 		if (curQueue->waitProcessID[priority_num][i] == ID)
@@ -16,24 +16,26 @@ void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊı£º¸Ã½ø³ÌËùÔÚµÄ¾ÍĞ÷¶ÓÁĞ ¸
 		}
 	}
 
-	printf("queue test1\n");
+	//printf("queue test1\n");
 	WaitForSingleObject(curQueue->queueMutex[priority_num], INFINITE);//½ÓÏÂÀ´µÄ²Ù×÷ÒªĞŞ¸Ä¾ÍĞ÷¶ÓÁĞ£¬·ÀÖ¹Í¬Ò»ÓÅÏÈ¼¶µÄ¶à¸ö½ø³ÌÍ¬Ê±ĞŞ¸Ä¸Ã¾ÍĞ÷¶ÓÁĞ
-	printf("queue test2\n");
+	//printf("queue test2\n");
+	if (pos != -1)
+	{
+		for (int i = pos; i != curQueue->head[priority_num]; i = (i - 1 + MAX_PROCESS) % MAX_PROCESS)//½«´ıÉ¾½ø³ÌÇ°ÃæµÄ½ø³ÌÎ»ÖÃÏòºóÒÆ
+			curQueue->waitProcessID[priority_num][i] = curQueue->waitProcessID[priority_num][(i - 1 + MAX_PROCESS) % MAX_PROCESS];
 
-	for (int i = pos; i != curQueue->head[priority_num]; i = (i - 1 + MAX_PROCESS) % MAX_PROCESS)//½«´ıÉ¾½ø³ÌÇ°ÃæµÄ½ø³ÌÎ»ÖÃÏòºóÒÆ
-		curQueue->waitProcessID[priority_num][i] = curQueue->waitProcessID[priority_num][(i - 1 + MAX_PROCESS) % MAX_PROCESS];
+		curQueue->head[priority_num] = (curQueue->head[priority_num] + 1) % MAX_PROCESS;//µ±Ç°¶ÓÁĞµÄ¶ÓÍ·ÏòºóÒÆÒ»¸öÎ»ÖÃ
 
-	curQueue->head[priority_num] = (curQueue->head[priority_num] + 1) % MAX_PROCESS;//µ±Ç°¶ÓÁĞµÄ¶ÓÍ·ÏòºóÒÆÒ»¸öÎ»ÖÃ
+		ReleaseSemaphore(curQueue->queueEmpty[priority_num], 1, NULL);//¿ÕÓà¿Õ¼ä¼ÓÒ»
+		WaitForSingleObject(curQueue->queueFull[priority_num], 0);//¶ÓÁĞÖĞ½ø³ÌÊı¼õÒ»
+		WaitForSingleObject(curQueue->totalCnt, 0);//¶ÓÁĞÖĞ½ø³Ì×ÜÊı¼õÒ»
 
-	ReleaseSemaphore(curQueue->queueEmpty[priority_num], 1, NULL);//¿ÕÓà¿Õ¼ä¼ÓÒ»
-	WaitForSingleObject(curQueue->queueFull[priority_num], 0);//¶ÓÁĞÖĞ½ø³ÌÊı¼õÒ»
-	WaitForSingleObject(curQueue->totalCnt, 0);//¶ÓÁĞÖĞ½ø³Ì×ÜÊı¼õÒ»
+		ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
+	}
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "-----Remove process %d successfully.\n", ID);//debugĞÅÏ¢£¬ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
+	ReleaseSemaphore(writeMutex, 1, NULL);
 
-	ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
-
-#ifdef DEBUG
-	printf("-----Remove process %d successfully.\n", ID);//debugĞÅÏ¢£¬ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
-#endif
 }
 
 void AddProcessToQueue(WaitQueue* curQueue, int ID)//½«½ø³Ì¼ÓÈëµ½Ö¸¶¨¾ÍĞ÷¶ÓÁĞÖĞ
@@ -54,9 +56,9 @@ void AddProcessToQueue(WaitQueue* curQueue, int ID)//½«½ø³Ì¼ÓÈëµ½Ö¸¶¨¾ÍĞ÷¶ÓÁĞÖĞ
 	ReleaseSemaphore(curQueue->totalCnt, 1, NULL);//¶ÓÁĞÖĞ½ø³Ì×ÜÊı¼ÓÒ»
 	ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
 
-#ifdef DEBUG
-	printf("-----Add process %d successfully.\n", ID);//debugĞÅÏ¢,ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
-#endif
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "-----Add process %d successfully.\n", ID);//debugĞÅÏ¢,ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
+	ReleaseSemaphore(writeMutex, 1, NULL);
 }
 
 //µ±Ò»¸öÊÂ¼şÍê³ÉÊ±£¬½«¸Ã½ø³Ì´Óµ±Ç°ËùÔÚµÄ¾ÍĞ÷¶ÓÁĞÉ¾³ı£¬²¢¼ÓÈëµ½ÏÂÒ»ÊÂ¼şËùÖ¸ÏòµÄ¾ÍĞ÷¶ÓÁĞÖĞ
@@ -64,9 +66,9 @@ void UpdateEvent(int proID)
 {
 	if (proID == -1)//Ç¿ÖÆÉ±ËÀ½ø³Ì¿ÉÄÜ»á°ÑÕâ¸öIDÖÃÎª-1
 		return;
-#ifdef DEBUG
-	printf("-----Process %d, job %d finish\n", proID, allPCB[proID].eventID);//debugĞÅÏ¢
-#endif
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "-----Process %d, job %d finish\n", proID, allPCB[proID].eventID);//debugĞÅÏ¢
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	if (allPCB[proID].eventID < allPCB[proID].eventNum - 1)//½ø³Ì»¹ÓĞÊÂ¼şÃ»Ö´ĞĞ
 	{
 		int preEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//¸ÕÖ´ĞĞ½áÊøµÄÊÂ¼şÀàĞÍ
@@ -85,25 +87,25 @@ void UpdateEvent(int proID)
 	if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyIO)//ºÍIO¶ÓÁĞÏà¹Ø
 	{
 		int curQueueID = allPCB[proID].events[allPCB[proID].eventID].eventMsg.IDOfIO;
-#ifdef DEBUG
-		printf("-----Move process %d from queue IO %d.\n", proID, curQueueID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "-----Move process %d from queue IO %d.\n", proID, curQueueID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		KillProFromQueue(&waitIOQueue[curQueueID], proID);//´ÓIO¾ÍĞ÷¶ÓÁĞÖĞÒÆ³ö
 	}
 	else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess)
 	{
 		//ºÍCPU¶ÓÁĞÏà¹Ø
-#ifdef DEBUG
-		printf("-----Move process %d from queue CPU.\n", proID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "-----Move process %d from queue CPU.\n", proID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		KillProFromQueue(&readyQueue, proID);//Í¬Àí
 
 	}
 	else//ºÍÄÚ´æ¶ÓÁĞÏà¹Ø
 	{
-#ifdef DEBUG
-		printf("-----Move process %d from queue Memory.\n", proID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "-----Move process %d from queue Memory.\n", proID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		KillProFromQueue(&memoryQueue, proID);//Í¬Àí
 	}
 	allPCB[proID].eventID++;//ÕıÔÚ½øĞĞµÄÊÂ¼ş±àºÅ¼Ó1£¬ÈÃÏÂÒ»ÊÂ¼şÔËĞĞ
@@ -114,33 +116,33 @@ void UpdateEvent(int proID)
 	}
 	else//½ø³Ì»¹Î´½áÊø
 	{
-#ifdef DEBUG
-		printf("-----Process %d, job %d start\n", proID, allPCB[proID].eventID);
-#endif
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "-----Process %d, job %d start\n", proID, allPCB[proID].eventID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyIO)//ºÍIO¶ÓÁĞÏà¹Ø
 		{
 			int curQueueID = allPCB[proID].events[allPCB[proID].eventID].eventMsg.IDOfIO;//µ±Ç°ÊÂ¼şÒªÊ¹ÓÃµÄIOÉè±¸ºÅ
-#ifdef DEBUG
-			printf("-----Insert process %d into queue IO %d.\n", proID, curQueueID);
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "-----Insert process %d into queue IO %d.\n", proID, curQueueID);
+			ReleaseSemaphore(writeMutex, 1, NULL);
 			AddProcessToQueue(&waitIOQueue[curQueueID], proID);//½«½ø³ÌÌí¼Óµ½Óëµ±Ç°ÊÂ¼şÏà¹ØµÄ¾ÍĞ÷¶ÓÁĞÖĞ
 			allPCB[proID].nowState = wait;//ĞèÒª»ñÈ¡IO×ÊÔ´£¬Òò´Ëµ±Ç°×´Ì¬ÎªµÈ´ı
 		}
 		else if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyCPU || allPCB[proID].events[allPCB[proID].eventID].eventType == createProcess)
 		{
 			//ºÍCPU¶ÓÁĞÏà¹Ø
-#ifdef DEBUG
-			printf("-----Insert process %d into queue CPU.\n", proID);
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "-----Insert process %d into queue CPU.\n", proID);
+			ReleaseSemaphore(writeMutex, 1, NULL);
 			AddProcessToQueue(&readyQueue, proID);//Í¬Àí
 			allPCB[proID].nowState = ready;//ÔÚÓëCPUÏà¹ØµÄ¾ÍĞ÷¶ÓÁĞÖĞ×´Ì¬Îª¾ÍĞ÷
 
 		}
 		else//ºÍÄÚ´æ¶ÓÁĞÏà¹Ø
 		{
-#ifdef DEBUG
-			printf("-----Insert process %d into queue Memory.\n", proID);
-#endif
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "-----Insert process %d into queue Memory.\n", proID);
+			ReleaseSemaphore(writeMutex, 1, NULL);
 			AddProcessToQueue(&memoryQueue, proID);//Í¬Àí
 			allPCB[proID].nowState = wait;//ĞèÒª»ñÈ¡ÄÚ´æµÄ·ÃÎÊÈ¨ÏŞµÈ×ÊÔ´£¬Òò´Ëµ±Ç°×´Ì¬ÎªµÈ´ı
 		}

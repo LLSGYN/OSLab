@@ -47,7 +47,10 @@ void flush_tlb(int ID) //check 1
 	{
 		if (fb[i].valid) {
 			fb[i].valid = 0;
-			free(fb[i].cp);
+			if (fb[i].cp)
+			{
+				free(fb[i].cp);
+			}
 		}
 		fb[i].frame = 0;
 	}
@@ -127,14 +130,14 @@ int walk_table(int page) // check 1
 
 int _TLB(int page) // check 1
 {
-	printf("Trying to find the frame for page %d\n", page);
+	// printf("Trying to find the frame for page %d\n", page);
 	if (fb[page].valid) { // a TLB hit
 		register_ref(page);
 		page_reference(cpid, page);
 		return fb[page].frame;
 	}
 	else { // a TLB miss
-		printf("Oops, a TLB miss!\n");
+		// printf("Oops, a TLB miss!\n");
 		int target = walk_table(page);
 		if (target == -1)
 			return -1;
@@ -191,11 +194,11 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 		return -1;
 	}
 	addr_t from = addr, to = addr + len, wlen = 0;
-	printf("%d %d %d\n", from , to, wlen);
+	// printf("%d %d %d\n", from , to, wlen);
 	while (from < to)
 	{
 		// try_to_write(cpid, from >> 12);
-		printf("should call try_to_write()\n");
+		// printf("should call try_to_write()\n");
 		int frame = _TLB(from >> 10), offset = from & 0x3ff; // TODO handle invalid frame query
 		int writelen = min(0x400 - offset, to - from);
 		memcpy(mem + (frame << 10 | offset), wbuf + wlen, writelen);

@@ -2,7 +2,7 @@
 
 void shell();
 int string2Int(char string[], int start);
-int substr(char string[], int start, char **substring);
+int substr(char string[], int start, char *substring);
 
 void shell()
 {

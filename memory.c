@@ -121,7 +121,7 @@ int try_to_share(int ID, int fID)
 // TODO: allocate memory, free memory
 int memory_alloc(int ID, int page_required) // TODO: fork, share page
 {
-	printf("Trying to allocate %d pages to pid %d\n", page_required, ID);
+	// printf("Trying to allocate %d pages to pid %d\n", page_required, ID);
 	if (ID >= MAX_PROCESS) {
 		printf("Invalid pid %d\n", ID);
 		return -1;

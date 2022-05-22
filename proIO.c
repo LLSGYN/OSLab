@@ -7,10 +7,9 @@ DWORD WINAPI virtualIO(LPVOID paramter)
 {
 	int ID = *((int*)paramter); // ID是io设备号
 #ifdef DEBUG
-	printf("IO %d start...\n", ID);
-	printf("Scheduling strategy is FCFS...\n");
+	fprintf(logs, "----IO %d start...\n", ID);
+	fprintf(logs, "----Scheduling strategy is FCFS...\n");
 #endif
-
 	WaitForSingleObject(contIO[ID], INFINITE);
 	while (1)
 	{
@@ -62,9 +61,8 @@ DWORD WINAPI ioScheduling(LPVOID paramter)
 {
 	int ID = *((int*)paramter);
 #ifdef DEBUG
-	printf("Dispatch IO %d start...\n", ID);
+	fprintf(logs, "----Dispatch IO %d start...\n", ID);
 #endif
-
 	while (1)
 	{
 		WaitForSingleObject(breakIO[ID], INFINITE); // 等待IO中断以进行IO调度
@@ -72,7 +70,7 @@ DWORD WINAPI ioScheduling(LPVOID paramter)
 		ReleaseSemaphore(waitIOQueue[ID].queueFull[0], 1, NULL); // 对full信号量-1，表示将一个进程从等待队列分配给IO设备
 
 		WaitForSingleObject(waitIOQueue[ID].queueMutex[0], INFINITE); // 获取等待队列的访问权限
-		
+
 		int nextPro = waitIOQueue[ID].head[0]; // 队列开始位置
 		//processInIO[ID] = nextPro;
 		processInIO[ID] = waitIOQueue[ID].waitProcessID[0][nextPro];

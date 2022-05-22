@@ -3,23 +3,23 @@
 DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 {
 #ifdef DEBUG
-	printf("memoryControl start...\n");
+	fprintf(logs, "----memoryControl start...\n");
 #endif
 	WaitForSingleObject(contMemory, INFINITE);//等待内存调度完成后，继续Memory运行
 	while (1)
 	{
 		WaitForSingleObject(timeLockForMemory, INFINITE);
 		WaitForSingleObject(proInMemMutex, INFINITE);//获取内存控制权限，在强制杀死进程的时候可能会争夺该信号量
-		WaitForSingleObject(allPCB[processInMemory].processMutex, INFINITE);
 
-		printf("memory test1\n");
+		//printf("memory test1\n");
 		if (processInMemory != -1)//有进程正在运行
 		{
 			int curEID = allPCB[processInMemory].eventID;//当前事件ID
 			allPCB[processInMemory].eventTime++;//事件运行时间加一
+			WaitForSingleObject(allPCB[processInMemory].processMutex, INFINITE);
 			if (allPCB[processInMemory].eventTime == allPCB[processInMemory].events[curEID].time)//当前事件即将执行完成
 			{
-				printf("memory test2\n");
+				//printf("memory test2\n");
 				if (allPCB[processInMemory].events[curEID].eventType == proReadMem)//读内存
 				{
 					int start_page = allPCB[processInMemory].events[curEID].eventMsg.wrMsg.startPageID;//逻辑页号
@@ -31,6 +31,9 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 					flush_tlb(allPCB[processInMemory].ID);
 					read_memory(memBuf, allPCB[processInMemory].ID, start_page * PAGE_SIZE + offset, len);
 					free(memBuf);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Process %d read memory is finished...\n", processInMemory);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == proWriteMem)//写内存
 				{
@@ -43,20 +46,23 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 					flush_tlb(allPCB[processInMemory].ID);
 					write_memory(memBuf, allPCB[processInMemory].ID, start_page * PAGE_SIZE + offset, len);
 					free(memBuf);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Process %d write memory is finished...\n", processInMemory);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == heapAlloc)//申请堆
 				{
 					allPCB[processInMemory].heapUsed += allPCB[processInMemory].events[curEID].needRAM;
-#ifdef DEBUG
-					printf("----Process %d heap alloc is finished...\n", processInMemory);
-#endif
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Process %d heap alloc is finished...\n", processInMemory);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 				}
 				else if (allPCB[processInMemory].events[curEID].eventType == stackAlloc)//申请栈
 				{
 					allPCB[processInMemory].stackUsed += allPCB[processInMemory].events[curEID].needRAM;
-#ifdef DEBUG
-					printf("----Process %d stack alloc is finished...\n", processInMemory);
-#endif
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Process %d stack alloc is finished...\n", processInMemory);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 				}
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 
@@ -70,16 +76,15 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 			}
 			else
 			{
-				printf("memory test3\n");
+				//printf("memory test3\n");
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			}
 		}
 		else
 		{
-			printf("memory test4\n");
+			//printf("memory test4\n");
 			ReleaseSemaphore(proInMemMutex, 1, NULL);
-			ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 			ReleaseSemaphore(breakMemory, 1, NULL);
 			WaitForSingleObject(contMemory, INFINITE);
 		}
@@ -89,7 +94,7 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 DWORD WINAPI DispatchMemory(LPVOID lpParamter)
 {
 #ifdef DEBUG
-	printf("Dispatch memory start...\n");
+	fprintf(logs, "----Dispatch memory start...\n");
 #endif
 	while (1)
 	{

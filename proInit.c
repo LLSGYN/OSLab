@@ -53,7 +53,6 @@ void InitSemaphore()
 	killQueueMutex = CreateSemaphore(NULL, 1, 1, NULL);
 	readyQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 	memoryQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
-	readyQueue.totalCnt = CreateSemaphore(NULL, 0, MAX_PROCESS, NULL);
 	for (int i = 0; i < PRIORITY_NUM; i++)
 	{
 		readyQueue.queueMutex[i] = CreateSemaphore(NULL, 1, 1, NULL);
@@ -74,6 +73,7 @@ void InitSemaphore()
 	}
 	for (int i = 0; i < MAX_PROCESS; ++i)
 		allPCB[i].processMutex = CreateSemaphore(NULL, 1, 1, NULL);
+	writeMutex = CreateSemaphore(NULL, 1, 1, NULL);
 }
 
 void Init()

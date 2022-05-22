@@ -4,28 +4,30 @@
 #include "proQueue.h"
 
 /*CPUMode 默认为0 调度策略为FCFS
-              为1 调度策略为非抢占的静态优先级
-              为2 调度策略为RR
+			  为1 调度策略为非抢占的静态优先级
+			  为2 调度策略为RR
 */
 
 //模拟CPU的运行
 DWORD WINAPI VirCPU(LPVOID lpParamter)
 {
-#ifdef DEBUG
-	printf("CPU start...\n");
+#ifdef  DEBUG
+	fprintf(logs, "CPU start...\n");
 	if (CPUMode == 0)
-		printf("CPU mode is FCFS...\n");
+		fprintf(logs, "CPU mode is FCFS...\n");
 	else if (CPUMode == 1)
-		printf("CPU mode is non-preemptive priority-based...\n");
+		fprintf(logs, "CPU mode is non-preemptive priority-based...\n");
 	else if (CPUMode == 2)
-		printf("CPU mode is RR...\n");
-#endif
+		fprintf(logs, "CPU mode is RR...\n");
 	if (CPUMode > 2)
 	{
-		printf("CPU mode error...\n");
+		fprintf(logs, "CPU mode error...\n");
 		exit(0);
 	}
+#endif //  DEBUG
+
 	WaitForSingleObject(contCPU, INFINITE);//等待CPU调度完成，进行CPU的运行
+
 #ifdef DEBUG
 	printf("****************get contCPU.\n");
 #endif
@@ -36,7 +38,7 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 		printf("*************get time successfully.\n");
 #endif
 		WaitForSingleObject(proInCPUMutex, INFINITE);//获取CPU运行权限，在强制杀死进程的时候可能会争夺该信号量
-		WaitForSingleObject(allPCB[processInCPU].processMutex, INFINITE);
+		//WaitForSingleObject(allPCB[processInCPU].processMutex, INFINITE);
 
 		if (processInCPU != -1)//有进程正在执行
 		{
@@ -56,7 +58,7 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 
 				WaitForSingleObject(killMutex, INFINITE);//保证更新进程信息的时候该进程不可以被强制销毁
 				UpdateEvent(processInCPU);//更新此进程的事件信息
-				ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
+				//ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 				ReleaseSemaphore(killMutex, 1, NULL);//释放killMutex
 
 				ReleaseSemaphore(breakCPU, 1, NULL);//CPU中断，等待CPU重新调度
@@ -74,9 +76,13 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 				}
 				else if (CPUMode == 2)//RR
 				{
-					printf("----Move process %d from queue CPU.\n", processInCPU);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Move process %d from queue CPU.\n", processInCPU);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					KillProFromQueue(&readyQueue, processInCPU);//将进程从当前队列删除
-					printf("----Insert process %d into queue CPU.\n", processInCPU);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----Insert process %d into queue CPU.\n", processInCPU);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					AddProcessToQueue(&readyQueue, processInCPU);//将进程加到当前队列尾部
 					allPCB[processInCPU].nowState = ready;
 
@@ -85,13 +91,13 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 				}
 
 				ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU运行权限信号量
-				ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
+				//ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 			}
 		}
 		else//没有进程正在执行
 		{
 			ReleaseSemaphore(proInCPUMutex, 1, NULL);//释放CPU运行权限信号量
-			ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
+			//ReleaseSemaphore(allPCB[processInCPU].processMutex, 1, NULL);
 			ReleaseSemaphore(breakCPU, 1, NULL);//CPU中断，等待CPU重新调度
 			WaitForSingleObject(contCPU, INFINITE);//等待CPU调度完成后，继续CPU的运行
 		}
@@ -102,7 +108,7 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 {
 #ifdef DEBUG
-	printf("Dispatch CPU start...\n");
+	fprintf(logs, "Dispatch CPU start...\n");
 #endif
 	if (CPUMode == 0 || CPUMode == 2)//FCFS RR,优先级默认为0,调度处于队头的进程运行
 	{
@@ -111,7 +117,7 @@ DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 			WaitForSingleObject(breakCPU, INFINITE);//等待CPU中断以进行CPU调度
 			WaitForSingleObject(readyQueue.queueFull[0], INFINITE);//等待，直到就绪队列中有进程
 			ReleaseSemaphore(readyQueue.queueFull[0], 1, NULL);//上一行代码将就绪队列的queueFull减一，在这里重新加回去。这两行代码的目的是确保就绪队列中有进程
-			
+
 			WaitForSingleObject(readyQueue.queueMutex[0], INFINITE);//获得就绪队列的访问权限
 			int subcript = readyQueue.head[0];//队头
 			processInCPU = readyQueue.waitProcessID[0][subcript];//被选中的进程ID
@@ -119,10 +125,9 @@ DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 			ReleaseSemaphore(readyQueue.queueMutex[0], 1, NULL);//释放该就绪队列的访问权限
 
 			ReleaseSemaphore(contCPU, 1, NULL);//调度完成，告知CPU继续运行
-#ifdef DEBUG
-			printf("**************CPU dispatch successfully...\n");
-#endif
-
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "----CPU dispatch successfully...\n");
+			ReleaseSemaphore(writeMutex, 1, NULL);
 		}
 	}
 	else if (CPUMode == 1)//非抢占的静态优先级
@@ -147,6 +152,9 @@ DWORD WINAPI DispatchCPU(LPVOID lpParamter)
 					ReleaseSemaphore(readyQueue.queueMutex[i], 1, NULL);//释放该就绪队列的访问权限
 
 					ReleaseSemaphore(contCPU, 1, NULL);//调度完成，告知CPU继续运行
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "----CPU dispatch successfully...\n");
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					break;
 				}
 			}
