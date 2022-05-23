@@ -152,23 +152,17 @@ void tlb_invalidate(int page)
 
 int _TLB(int page) // check 1
 {
-<<<<<<< Updated upstream
 	// printf("Trying to find the frame for page %d\n", page);
-=======
 	puts("----------------------------------------------");
 	printf("[TLB] Looking for phys frame of page %d, pid=%d\n", page, cpid);
->>>>>>> Stashed changes
 	if (fb[page].valid) { // a TLB hit
 		register_ref(page);
 		page_reference(cpid, page);
 		return fb[page].frame;
 	}
 	else { // a TLB miss
-<<<<<<< Updated upstream
 		// printf("Oops, a TLB miss!\n");
-=======
 		printf("[TLB] TLB miss...\n");
->>>>>>> Stashed changes
 		int target = walk_table(page);
 		if (target == -1)
 			return -1;
@@ -227,18 +221,10 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 		return -1;
 	}
 	addr_t from = addr, to = addr + len, wlen = 0;
-<<<<<<< Updated upstream
-	// printf("%d %d %d\n", from , to, wlen);
-	while (from < to)
-	{
-		// try_to_write(cpid, from >> 12);
-		// printf("should call try_to_write()\n");
-=======
 	printf("[write_mem] st=%d, ed=%d\n", from, to);
 	while (from < to)
 	{
 		try_to_write(cpid, from >> 10);
->>>>>>> Stashed changes
 		int frame = _TLB(from >> 10), offset = from & 0x3ff; // TODO handle invalid frame query
 		int writelen = min(0x400 - offset, to - from);
 		memcpy(mem + (frame << 10 | offset), wbuf + wlen, writelen);
@@ -248,7 +234,8 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 	return 0;
 }
 
-int mmu_read_frame(int frame, char *buf) {
+int mmu_read_frame(int frame, char *buf)
+{
 	if (frame >= 4096) {
 		return -1;
 	}
@@ -256,7 +243,8 @@ int mmu_read_frame(int frame, char *buf) {
 	return 0;
 }
 
-int mmu_write_frame(int frame, char *buf) {
+int mmu_write_frame(int frame, char *buf) 
+{
 	if (frame >= 4096) {
 		return -1;
 	}

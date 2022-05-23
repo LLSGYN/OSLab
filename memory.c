@@ -341,5 +341,4 @@ int main()
 	read_memory(rb, 3, 3000, 18);
 	puts(rb);
 	return 0;
-}
-*/
+}*/
