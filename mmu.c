@@ -22,12 +22,12 @@ typedef struct _LRUNODE {
 
 typedef struct {
 	unsigned int frame; // target frame
-	int valid; 
+	int valid;
 	lru_node* cp; // pointer to the lru-cache node
 } tlb_ht;
 
 static int qlen = 0;
-static lru_node* head = NULL, *tail = NULL;
+static lru_node* head = NULL, * tail = NULL;
 tlb_ht fb[NUM_PAGE]; // frame bucket
 
 static int cpid;
@@ -63,7 +63,7 @@ void flush_tlb(int ID) //check 1
 
 lru_node* _push_head(int page) // check 1
 {
-	lru_node *nPtr = malloc(sizeof(lru_node));
+	lru_node* nPtr = malloc(sizeof(lru_node));
 	nPtr->key = page;
 	nPtr->prev = head;
 	nPtr->next = head->next;
@@ -76,7 +76,7 @@ lru_node* _push_head(int page) // check 1
 
 void delete_node(int page) // check 1
 {
-	lru_node *cur = fb[page].cp;
+	lru_node* cur = fb[page].cp;
 	cur->prev->next = cur->next;
 	if (cur->next) {
 		cur->next->prev = cur->prev;
@@ -102,7 +102,7 @@ void register_ref(int page) // check 1
 
 void dbg_tlb() // check 2
 {
-	lru_node *cur = head->next;
+	lru_node* cur = head->next;
 	while (cur)
 	{
 		printf("%d ", cur->key);
@@ -128,7 +128,7 @@ int walk_table(int page) // check 1
 			do_no_page(mem, id, page);
 			// 处理了缺页中断之后，当前页已经有效，返回这个页框号
 			// 当前问题：在处理缺页中断时，谁把内容写进了物理内存？
-			return page_table[id][page].frame; 
+			return page_table[id][page].frame;
 			// printf("page is valid, but should be load into memory, call do_no_page()\n");
 			// return -2;
 		}
@@ -169,7 +169,7 @@ int _TLB(int page) // check 1
 		//else if (target == -2) {
 		//	target = do_no_page(mem, cpid, page);
 		//}
-		lru_node *nPtr = _push_head(page);
+		lru_node* nPtr = _push_head(page);
 		fb[page].cp = nPtr, fb[page].frame = target, fb[page].valid = 1;
 		if (qlen == 1)
 			tail = nPtr;
@@ -197,7 +197,7 @@ int read_memory(char* buf, int ID, addr_t addr, int len)
 	addr_t from = addr, to = addr + len, wlen = 0;
 	while (from < to)
 	{
-		
+
 		int frame = _TLB(from >> 10), offset = from & 0x3ff; // TODO handle invalid frame query
 		/*
 		* 解释一下这个min
@@ -234,7 +234,7 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 	return 0;
 }
 
-int mmu_read_frame(int frame, char *buf)
+int mmu_read_frame(int frame, char* buf)
 {
 	if (frame >= 4096) {
 		return -1;
@@ -243,7 +243,7 @@ int mmu_read_frame(int frame, char *buf)
 	return 0;
 }
 
-int mmu_write_frame(int frame, char *buf) 
+int mmu_write_frame(int frame, char* buf)
 {
 	if (frame >= 4096) {
 		return -1;

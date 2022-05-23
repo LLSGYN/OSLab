@@ -16,7 +16,9 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 		{
 			int curEID = allPCB[processInMemory].eventID;//当前事件ID
 			allPCB[processInMemory].eventTime++;//事件运行时间加一
+			WaitForSingleObject(killMutex, INFINITE);
 			WaitForSingleObject(allPCB[processInMemory].processMutex, INFINITE);
+			ReleaseSemaphore(killMutex, 1, NULL);
 			if (allPCB[processInMemory].eventTime == allPCB[processInMemory].events[curEID].time)//当前事件即将执行完成
 			{
 				//printf("memory test2\n");
@@ -66,10 +68,8 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 				}
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 
-				WaitForSingleObject(killMutex, INFINITE);
-				UpdateEvent(processInMemory);
-				ReleaseSemaphore(killMutex, 1, NULL);
 				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
+				UpdateEvent(processInMemory);
 
 				ReleaseSemaphore(breakMemory, 1, NULL);
 				WaitForSingleObject(contMemory, INFINITE);
@@ -77,8 +77,8 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 			else
 			{
 				//printf("memory test3\n");
-				ReleaseSemaphore(proInMemMutex, 1, NULL);
 				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
+				ReleaseSemaphore(proInMemMutex, 1, NULL);
 			}
 		}
 		else

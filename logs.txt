@@ -1,0 +1,510 @@
+CPU start...
+CPU mode is non-preemptive priority-based...
+
+----Process 0 created...
+----the priority of process is 3
+----event total RAM is 11
+----event total num is 15
+	event 0:  eventType: 0  needs time: 19
+	event 1:  eventType: 2  needs time: 2
+	event 2:  eventType: 6  needs time: 2
+	event 3:  eventType: 6  needs time: 2
+	event 4:  eventType: 3  needs time: 12
+	event 5:  eventType: 0  needs time: 10
+	event 6:  eventType: 4  needs time: 8
+	event 7:  eventType: 2  needs time: 2
+	event 8:  eventType: 3  needs time: 2
+	event 9:  eventType: 4  needs time: 2
+	event 10:  eventType: 4  needs time: 6
+	event 11:  eventType: 5  needs time: 2
+	event 12:  eventType: 5  needs time: 2
+	event 13:  eventType: 3  needs time: 10
+	event 14:  eventType: 3  needs time: 6
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+-----Process 0, job 0 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 1 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+
+----Process 1 created...
+----the priority of process is 2
+----event total RAM is 7
+----event total num is 7
+	event 0:  eventType: 0  needs time: 23
+	event 1:  eventType: 6  needs time: 2
+	event 2:  eventType: 4  needs time: 4
+	event 3:  eventType: 5  needs time: 2
+	event 4:  eventType: 3  needs time: 2
+	event 5:  eventType: 3  needs time: 2
+	event 6:  eventType: 0  needs time: 5
+-----Add process 1 successfully.
+-----Process 0, job 1 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 2 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+----Process 0 stack alloc is finished...
+-----Process 0, job 2 finish
+----Process 0 stack alloc is finished...
+-----Process 0, job 3 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 4 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 write memory is finished...
+-----Process 0, job 4 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 5 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+-----Process 1, job 0 finish
+-----Move process 1 from queue CPU.
+-----Remove process 1 successfully.
+-----Process 1, job 1 start
+-----Insert process 1 into queue Memory.
+-----Add process 1 successfully.
+----CPU dispatch successfully...
+----Process 1 stack alloc is finished...
+-----Process 1, job 1 finish
+-----Move process 1 from queue Memory.
+-----Remove process 1 successfully.
+-----Process 1, job 2 start
+-----Insert process 1 into queue Memory.
+-----Add process 1 successfully.
+----Process 1 read memory is finished...
+-----Process 1, job 2 finish
+-----Move process 1 from queue Memory.
+-----Remove process 1 successfully.
+-----Process 1, job 3 start
+-----Insert process 1 into queue Memory.
+-----Add process 1 successfully.
+----Process 1 heap alloc is finished...
+-----Process 1, job 3 finish
+-----Move process 1 from queue Memory.
+-----Remove process 1 successfully.
+-----Process 1, job 4 start
+-----Insert process 1 into queue Memory.
+-----Add process 1 successfully.
+----Process 1 write memory is finished...
+-----Process 1, job 4 finish
+-----Process 0, job 5 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 6 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 1 write memory is finished...
+-----Process 1, job 5 finish
+-----Move process 1 from queue Memory.
+-----Remove process 1 successfully.
+-----Process 1, job 6 start
+-----Insert process 1 into queue CPU.
+-----Add process 1 successfully.
+----CPU dispatch successfully...
+-----Process 1, job 6 finish
+-----Move process 1 from queue CPU.
+-----Remove process 1 successfully.
+----Process 1 will be killed!
+
+INFO:process 1 is killed!
+----Process 0 read memory is finished...
+-----Process 0, job 6 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 7 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+
+----Process 1 created...
+----the priority of process is 0
+----event total RAM is 16
+----event total num is 11
+	event 0:  eventType: 0  needs time: 9
+	event 1:  eventType: 2  needs time: 24
+	event 2:  eventType: 5  needs time: 2
+	event 3:  eventType: 6  needs time: 2
+	event 4:  eventType: 4  needs time: 30
+	event 5:  eventType: 4  needs time: 26
+	event 6:  eventType: 4  needs time: 26
+	event 7:  eventType: 3  needs time: 2
+	event 8:  eventType: 3  needs time: 4
+	event 9:  eventType: 3  needs time: 4
+	event 10:  eventType: 4  needs time: 8
+-----Add process 1 successfully.
+-----Process 0, job 7 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 8 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+----Process 0 write memory is finished...
+-----Process 0, job 8 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 9 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 read memory is finished...
+-----Process 0, job 9 finish
+-----Process 1, job 0 finish
+----CPU dispatch successfully...
+----Process 0 read memory is finished...
+-----Process 0, job 10 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 11 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 heap alloc is finished...
+-----Process 0, job 11 finish
+----Process 0 heap alloc is finished...
+-----Process 0, job 12 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 13 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 write memory is finished...
+-----Process 0, job 13 finish
+----Process 0 write memory is finished...
+-----Process 0, job 14 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+----Process 0 will be killed!
+----start kill process 1...
+----kill process is in CPU queue...
+----CPU released...
+-----Remove process 1 successfully.
+----remove process 1 from readyQueue...
+----Process 1 will be killed!
+
+INFO:process 0 is killed!
+
+INFO:process 1 is killed!
+
+----Process 0 created...
+----the priority of process is 0
+----event total RAM is 16
+----event total num is 8
+	event 0:  eventType: 0  needs time: 23
+	event 1:  eventType: 2  needs time: 2
+	event 2:  eventType: 2  needs time: 2
+	event 3:  eventType: 3  needs time: 8
+	event 4:  eventType: 3  needs time: 12
+	event 5:  eventType: 0  needs time: 20
+	event 6:  eventType: 5  needs time: 2
+	event 7:  eventType: 4  needs time: 6
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+-----Process 0, job 0 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 1 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+
+----Process 1 created...
+----the priority of process is 3
+----event total RAM is 4
+----event total num is 8
+	event 0:  eventType: 0  needs time: 19
+	event 1:  eventType: 5  needs time: 2
+	event 2:  eventType: 0  needs time: 29
+	event 3:  eventType: 5  needs time: 2
+	event 4:  eventType: 2  needs time: 5
+	event 5:  eventType: 4  needs time: 4
+	event 6:  eventType: 6  needs time: 2
+	event 7:  eventType: 3  needs time: 6
+-----Add process 1 successfully.
+-----Process 0, job 1 finish
+----CPU dispatch successfully...
+
+----Process 2 created...
+----the priority of process is 3
+----event total RAM is 15
+----event total num is 14
+	event 0:  eventType: 0  needs time: 14
+	event 1:  eventType: 2  needs time: 17
+	event 2:  eventType: 5  needs time: 2
+	event 3:  eventType: 5  needs time: 2
+	event 4:  eventType: 5  needs time: 2
+	event 5:  eventType: 3  needs time: 6
+	event 6:  eventType: 0  needs time: 4
+	event 7:  eventType: 0  needs time: 23
+	event 8:  eventType: 5  needs time: 2
+	event 9:  eventType: 0  needs time: 3
+	event 10:  eventType: 1  alloc IO_num: 2  needs time: 26
+	event 11:  eventType: 5  needs time: 2
+	event 12:  eventType: 6  needs time: 2
+	event 13:  eventType: 6  needs time: 2
+-----Add process 2 successfully.
+-----Process 0, job 2 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 3 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+----Process 0 write memory is finished...
+-----Process 0, job 3 finish
+-----Process 1, job 0 finish
+-----Move process 1 from queue CPU.
+-----Remove process 1 successfully.
+-----Process 1, job 1 start
+-----Insert process 1 into queue Memory.
+-----Add process 1 successfully.
+----CPU dispatch successfully...
+----Process 0 write memory is finished...
+-----Process 0, job 4 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 5 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----Process 1 heap alloc is finished...
+-----Process 1, job 1 finish
+-----Move process 1 from queue Memory.
+-----Remove process 1 successfully.
+-----Process 1, job 2 start
+-----Insert process 1 into queue CPU.
+-----Add process 1 successfully.
+-----Process 2, job 0 finish
+----CPU dispatch successfully...
+-----Process 0, job 5 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 6 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+----Process 0 heap alloc is finished...
+-----Process 0, job 6 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 7 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 read memory is finished...
+-----Process 0, job 7 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+----Process 0 will be killed!
+----start kill process 1...
+----kill process is in CPU queue...
+-----Remove process 1 successfully.
+----remove process 1 from readyQueue...
+----Process 1 will be killed!
+----start kill process 2...
+----kill process is in CPU queue...
+----CPU released...
+-----Remove process 2 successfully.
+----remove process 2 from readyQueue...
+----Process 2 will be killed!
+
+INFO:process 0 is killed!
+
+INFO:process 1 is killed!
+
+INFO:process 2 is killed!
+
+----Process 0 created...
+----the priority of process is 3
+----event total RAM is 11
+----event total num is 10
+	event 0:  eventType: 0  needs time: 21
+	event 1:  eventType: 6  needs time: 2
+	event 2:  eventType: 6  needs time: 2
+	event 3:  eventType: 5  needs time: 2
+	event 4:  eventType: 6  needs time: 2
+	event 5:  eventType: 1  alloc IO_num: 0  needs time: 13
+	event 6:  eventType: 2  needs time: 2
+	event 7:  eventType: 0  needs time: 22
+	event 8:  eventType: 6  needs time: 2
+	event 9:  eventType: 4  needs time: 10
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+-----Process 0, job 0 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 1 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 stack alloc is finished...
+-----Process 0, job 1 finish
+----Process 0 stack alloc is finished...
+-----Process 0, job 2 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 3 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 heap alloc is finished...
+-----Process 0, job 3 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 4 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 stack alloc is finished...
+-----Process 0, job 4 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 5 start
+-----Insert process 0 into queue IO 0.
+-----Add process 0 successfully.
+-----Process 0, job 5 finish
+-----Move process 0 from queue IO 0.
+-----Remove process 0 successfully.
+-----Process 0, job 6 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+
+----Process 1 created...
+----the priority of process is 2
+----event total RAM is 10
+----event total num is 1
+	event 0:  eventType: 0  needs time: 20
+-----Add process 1 successfully.
+-----Process 0, job 6 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 7 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+-----Process 1, job 0 finish
+-----Move process 1 from queue CPU.
+-----Remove process 1 successfully.
+----Process 1 will be killed!
+----CPU dispatch successfully...
+
+INFO:process 1 is killed!
+-----Process 0, job 7 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 8 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 stack alloc is finished...
+-----Process 0, job 8 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+-----Process 0, job 9 start
+-----Insert process 0 into queue Memory.
+-----Add process 0 successfully.
+----Process 0 read memory is finished...
+-----Process 0, job 9 finish
+-----Move process 0 from queue Memory.
+-----Remove process 0 successfully.
+----Process 0 will be killed!
+----start kill process 1...
+----kill process is in memory queue...
+-----Remove process 1 successfully.
+----remove process 1 from memoryQueue...
+----Process 1 will be killed!
+----start kill process 2...
+----kill process is in CPU queue...
+-----Remove process 2 successfully.
+----remove process 2 from readyQueue...
+----Process 2 will be killed!
+
+INFO:process 0 is killed!
+
+INFO:process 1 is killed!
+
+INFO:process 2 is killed!
+
+----Process 0 created...
+----the priority of process is 2
+----event total RAM is 10
+----event total num is 6
+	event 0:  eventType: 0  needs time: 7
+	event 1:  eventType: 2  needs time: 2
+	event 2:  eventType: 5  needs time: 2
+	event 3:  eventType: 6  needs time: 2
+	event 4:  eventType: 3  needs time: 2
+	event 5:  eventType: 3  needs time: 2
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+-----Process 0, job 0 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 1 start
+-----Insert process 0 into queue CPU.
+-----Add process 0 successfully.
+----CPU dispatch successfully...
+
+----Process 1 created...
+----the priority of process is 1
+----event total RAM is 7
+----event total num is 12
+	event 0:  eventType: 0  needs time: 2
+	event 1:  eventType: 5  needs time: 2
+	event 2:  eventType: 5  needs time: 2
+	event 3:  eventType: 4  needs time: 8
+	event 4:  eventType: 4  needs time: 6
+	event 5:  eventType: 3  needs time: 2
+	event 6:  eventType: 6  needs time: 2
+	event 7:  eventType: 3  needs time: 6
+	event 8:  eventType: 4  needs time: 6
+	event 9:  eventType: 2  needs time: 3
+	event 10:  eventType: 2  needs time: 22
+	event 11:  eventType: 0  needs time: 23
+-----Add process 1 successfully.
+-----Process 0, job 1 finish
+-----Move process 0 from queue CPU.
+-----Remove process 0 successfully.
+-----Process 0, job 2 start
+-----Insert process 0 into queue Memory.
+
+----Process 2 created...
+----the priority of process is 0
+----event total RAM is 4
+----event total num is 5
+	event 0:  eventType: 0  needs time: 3
+	event 1:  eventType: 6  needs time: 2
+	event 2:  eventType: 6  needs time: 2
+	event 3:  eventType: 0  needs time: 4
+	event 4:  eventType: 5  needs time: 2
+-----Add process 2 successfully.
+
+----Process 3 created...
+----the priority of process is 0
+----event total RAM is 10
+----event total num is 8
+	event 0:  eventType: 0  needs time: 5
+	event 1:  eventType: 6  needs time: 2
+	event 2:  eventType: 3  needs time: 6
+	event 3:  eventType: 1  alloc IO_num: 0  needs time: 15
+	event 4:  eventType: 5  needs time: 2
+	event 5:  eventType: 0  needs time: 19
+	event 6:  eventType: 0  needs time: 3
+	event 7:  eventType: 6  needs time: 2
+-----Add process 3 successfully.
+
+----Process 4 created...
+----the priority of process is 3
+----event total RAM is 5
+----event total num is 10
+	event 0:  eventType: 0  needs time: 3
+	event 1:  eventType: 4  needs time: 4
+	event 2:  eventType: 5  needs time: 2
+	event 3:  eventType: 5  needs time: 2
+	event 4:  eventType: 2  needs time: 2
+	event 5:  eventType: 2  needs time: 2
+	event 6:  eventType: 0  needs time: 18
+	event 7:  eventType: 2  needs time: 2
+	event 8:  eventType: 4  needs time: 6
+	event 9:  eventType: 6  needs time: 2

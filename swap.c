@@ -1,9 +1,10 @@
-#include "lru.h"
+﻿#include "lru.h"
 #include "swap.h"
 
 #include <stdio.h>
 
 int op = 0;
+int cnt = 0;
 /*
  * demand paging algo
  * 0: LRU
@@ -118,6 +119,8 @@ void dbg_residents(int ID)
 // 查询下一个空闲磁盘块
 int get_next_free_block() {
 	int i = (blk_nr + 1) % block_count;
+	++cnt;
+	printf("%d\n", cnt);
 	while (i != blk_nr) {
 		if (block_map[i] == -1) {
 			blk_nr = i;

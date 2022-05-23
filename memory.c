@@ -162,7 +162,6 @@ int try_to_share(int ID, int fID) // pay attention!
 		page_table[fID][i].RW = 1; // to implement copy-on-write, set to read only
 		page_table[ID][i] = page_table[fID][i];
 		if (page_table[ID][i].V) {
-			printf("ok: %d\n", page_table[ID][i].frame);
 			mem_map[page_table[ID][i].frame]++;
 		}
 		else if (page_table[ID][i].P) { // 这里可能会修改
@@ -174,7 +173,7 @@ int try_to_share(int ID, int fID) // pay attention!
 // TODO: allocate memory, free memory
 int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share page
 {
-	// printf("Trying to allocate %d pages to pid %d\n", page_required, ID);
+	printf("[mem-alloc] Trying to allocate %d pages to pid %d\n", page_required, ID);
 	if (ID >= MAX_PROCESS) {
 		printf("Invalid pid %d\n", ID);
 		return -1;
@@ -186,6 +185,7 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 	int faID = allPCB[ID].fatherProID;
 	share_table[ID].n_pages = page_required;
 	if (faID >= 0 && !realloc) { 
+		printf("process %d created create a subprocess %d!\n", faID, ID);
 		try_to_share(ID, faID);
 		// 对于fork的进程，应当共享一个resident set
 		// 每当出现一个共享，它们的resident set大小增加一个MAX_SIZE
@@ -193,10 +193,10 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 	}
 	else { 
 		if (!realloc) {
+			puts("triggered!");
 			share_table[ID].father = -1;
 			share_table[ID].dr_share = -1;
 		}
-
 		int i = 0;
 		while (i < page_required && i < MAX_RESIDENTS) {
 			int alloc = get_next_free();

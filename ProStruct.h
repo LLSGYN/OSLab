@@ -39,7 +39,6 @@ enum EventTypes {
 	proReadMem,		//读内存
 	heapAlloc,	    //申请堆
 	stackAlloc,		//申请栈
-	// compile,		//-------编译-------
 };
 
 //进程状态
@@ -59,7 +58,6 @@ union EventMsg {
 	WRMemory wrMsg;  //读写内存的信息
 	int allocNum;    //申请内存的页数
 	int IDOfIO;      //对应的IO设备ID
-	char filename[MAX_NAME];   //---------文件名------
 };
 
 typedef struct DefineEvent {

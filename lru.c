@@ -118,10 +118,11 @@ int LRU_demand(int ID, int page)
 	push_head(ID, page);
 
 	int target_page = tail[ID]->page_id;
-	lruptr t = tail[ID];
-	tail[ID] = t->pre;
-	tail[ID]->next = NULL;
-	free(t);
+	remove_node(ID, target_page);
+	//lruptr t = tail[ID];
+	//tail[ID] = t->pre;
+	//tail[ID]->next = NULL;
+	//free(t);
 	return target_page;
 }
 

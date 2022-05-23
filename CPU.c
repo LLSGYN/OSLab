@@ -11,7 +11,7 @@
 //模拟CPU的运行
 DWORD WINAPI VirCPU(LPVOID lpParamter)
 {
-#ifdef  DEBUG
+	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "CPU start...\n");
 	if (CPUMode == 0)
 		fprintf(logs, "CPU mode is FCFS...\n");
@@ -19,12 +19,12 @@ DWORD WINAPI VirCPU(LPVOID lpParamter)
 		fprintf(logs, "CPU mode is non-preemptive priority-based...\n");
 	else if (CPUMode == 2)
 		fprintf(logs, "CPU mode is RR...\n");
-	if (CPUMode > 2)
+	else
 	{
 		fprintf(logs, "CPU mode error...\n");
-		exit(0);
+		CPUMode = 0;
 	}
-#endif //  DEBUG
+	ReleaseSemaphore(writeMutex, 1, NULL);
 
 	WaitForSingleObject(contCPU, INFINITE);//等待CPU调度完成，进行CPU的运行
 

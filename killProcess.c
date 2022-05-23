@@ -11,6 +11,7 @@ void DestoryProcess(int ID)//自然销毁的进程ID
 	//	}
 	//}
 	WaitForSingleObject(killQueueMutex, INFINITE);//获取待删进程队列的权限
+	allPCB[ID].fatherProID = -1;
 
 	if (toBeKilled[ID] == 0)//若该进程尚未处于待删进程队列中
 	{
@@ -92,9 +93,9 @@ void KillProcess(int ID)//强制销毁指定的进程
 		ReleaseSemaphore(writeMutex, 1, NULL);
 		WaitForSingleObject(proInMemMutex, INFINITE);
 		ReleaseSemaphore(writeMutex, 1, NULL);
-		if (processInCPU == ID)
+		if (processInMemory == ID)
 		{
-			processInCPU = -1;
+			processInMemory = -1;
 			WaitForSingleObject(writeMutex, INFINITE);
 			fprintf(logs, "----Memory released...\n");
 			ReleaseSemaphore(writeMutex, 1, NULL);
@@ -134,7 +135,8 @@ DWORD WINAPI MyKill(LPVOID lpParam)
 				ReleaseSemaphore(allPCB[i].processMutex, 1, NULL);
 				KillProcess(i);//强制删除子进程
 			}
-			ReleaseSemaphore(allPCB[i].processMutex, 1, NULL);
+			else
+				ReleaseSemaphore(allPCB[i].processMutex, 1, NULL);
 		}
 		WaitForSingleObject(allPCB[killID].processMutex, INFINITE);
 		int thisFather = allPCB[killID].fatherProID;//待删进程的父进程ID

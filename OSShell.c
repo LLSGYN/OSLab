@@ -47,7 +47,7 @@ void shell()
 			printf("All commands:\n");
 			printf("Commands about file operation:\n");
 			printf("cd [DIRECTORY]				Change the shell working directory.\n");
-			printf("ln [OLD NAME] [NEW NAME]		Linke the file or dirctor name with NEW NAME.\n");
+			printf("ln [OLD NAME] [NEW NAME]		Linke the file or directory name with NEW NAME.\n");
 			printf("ls					List  information  about the FILEs (the current directory by default).\n");
 			printf("mkdir [DIRECTORY]			Create the DIRECTORY(ies), if they do not already exist.\n");
 			printf("mv [OLD NAME] [NEW NAME]		Rename the file or directory name from OLD NAME to NEW NAME, if it exists.\n");

@@ -32,7 +32,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	WaitForSingleObject(allPCB[nowID].processMutex, INFINITE);
 	processCNT++;//进程总数加一
 	WaitForSingleObject(writeMutex, INFINITE);
-	fprintf(logs, "----process totol count is %d\n", processCNT);
+	fprintf(logs, "\n----Process %d created...\n", nowID);
 	ReleaseSemaphore(writeMutex, 1, NULL);
 	for (int i = 0; i < MAX_NAME; i++)
 		allPCB[nowID].name[i] = processName[i];//新进程名字
@@ -55,7 +55,10 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 
 	allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//随机生成申请的内存页数 最小为3
 	//调用接口函数向内存模块申请内存
-	memory_alloc(nowID, allPCB[nowID].pageNum);
+	memory_alloc(nowID, allPCB[nowID].pageNum, 0);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "----event total RAM is %d\n", allPCB[nowID].pageNum);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 
 	allPCB[nowID].eventNum = rand() % MAX_EVENT + 1;
 	WaitForSingleObject(writeMutex, INFINITE);
@@ -64,14 +67,17 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	int mem_cnt = 0;//被占用的内存页数
 	for (int i = 0; i < allPCB[nowID].eventNum; i++)
 	{
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "\tevent %d:", i);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (i == 0)
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
 			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
-			//allPCB[nowID].events[i].eventType = 4;// 时间为占用IO
+			// allPCB[nowID].events[i].eventType = 5;// 时间为占用IO
 
 		WaitForSingleObject(writeMutex, INFINITE);
-		fprintf(logs, "----eventType is %d\n", allPCB[nowID].events[i].eventType);
+		fprintf(logs, "  eventType: %d", allPCB[nowID].events[i].eventType);
 		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
 			allPCB[nowID].events[i].eventType = occupyCPU;//将子进程的创建进程事件视为特殊的占用CPU的事件
@@ -82,14 +88,13 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		{
 			allPCB[nowID].events[i].eventMsg.IDOfIO = rand() % IO_NUM;//分配IO号
 			WaitForSingleObject(writeMutex, INFINITE);
-			fprintf(logs, "----alloc IO_num is %d...\n", allPCB[nowID].events[i].eventMsg.IDOfIO);
+			fprintf(logs, "  alloc IO_num: %d", allPCB[nowID].events[i].eventMsg.IDOfIO);
 			ReleaseSemaphore(writeMutex, 1, NULL);
 			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //事件所需时间片数随机
 		}
 		else if (allPCB[nowID].events[i].eventType == heapAlloc || allPCB[nowID].events[i].eventType == stackAlloc)//申请堆栈事件
 		{
 			int getMem = rand() % 100;//事件需要内存的概率 小于MAX_NEED_MEMORY则需要
-			getMem = 0;
 			if (getMem < NEED_MEMORY_PERCENT && mem_cnt < allPCB[nowID].pageNum)//需要内存 而且 内存没被分配完
 			{
 				allPCB[nowID].events[i].needRAM = rand() % (allPCB[nowID].pageNum - mem_cnt) + 1;//随机获得内存大小（单位：页
@@ -114,7 +119,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		else//occupyCPU
 			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //事件所需时间片数随机
 		WaitForSingleObject(writeMutex, INFINITE);
-		fprintf(logs, "----this event needs %d time\n", allPCB[nowID].events[i].time);
+		fprintf(logs, "  needs time: %d\n", allPCB[nowID].events[i].time);
 		ReleaseSemaphore(writeMutex, 1, NULL);
 	}
 
@@ -123,9 +128,6 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	allPCB[nowID].IOID = -1;              //
 	allPCB[nowID].heapUsed = 0;
 	allPCB[nowID].stackUsed = 0;
-	WaitForSingleObject(writeMutex, INFINITE);
-	fprintf(logs, "----Process %d created...\n", nowID);
-	ReleaseSemaphore(writeMutex, 1, NULL);
 	AddProcessToQueue(&readyQueue, nowID);
 	allPCB[nowID].nowState = ready;
 	ReleaseSemaphore(allPCB[nowID].processMutex, 1, NULL);
@@ -270,7 +272,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 	printf("----Process %d created...\n", Id);
 	AddProcessToQueue(&readyQueue, Id);
 	allPCB[Id].nowState = ready;
-	memory_alloc(Id, allPCB[Id].pageNum);
+	memory_alloc(Id, allPCB[Id].pageNum, 0);
 	ReleaseSemaphore(allPCB[Id].processMutex, 1, NULL);
 	return 1;
 }
