@@ -4,6 +4,9 @@
 *.filters
 *.user
 *.sln
+*.exe
 
 x64/
 .vs/
+.vscode/*
+Debug/*

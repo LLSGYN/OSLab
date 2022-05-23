@@ -70,6 +70,7 @@ lru_node* _push_head(int page) // check 1
 	if (nPtr->next)
 		nPtr->next->prev = nPtr;
 	head->next = nPtr;
+	qlen++;
 	return nPtr;
 }
 
@@ -83,6 +84,7 @@ void delete_node(int page) // check 1
 	else {
 		tail = cur->prev;
 	}
+	qlen--;
 	free(cur);
 }
 
@@ -93,8 +95,9 @@ void register_ref(int page) // check 1
 		printf("Error! the page accessed is not valid!\n");
 		exit(-1);
 	}
-	_push_head(page);
+	lru_node* tmp = _push_head(page);
 	delete_node(page);
+	fb[page].cp = tmp;
 }
 
 void dbg_tlb() // check 2
@@ -111,40 +114,67 @@ void dbg_tlb() // check 2
 // 这个函数用于tlb查询失败时，尝试查询页表或调用缺页中断的
 int walk_table(int page) // check 1
 {
-	if (!page_table[cpid][page].P) {
+	int id = cpid;
+	while (share_table[id].father != -1)
+	{
+		id = share_table[id].father;
+	}
+	if (!page_table[id][page].P) {
 		fprintf(stderr, "trying to access invalid address\n");
 		return -1;
 	}
 	else {
-		if (!page_table[cpid][page].V) {
-			// do_no_page(mem, cpid, page);
-			printf("page is valid, but should be load into memory, call do_no_page()\n");
-			return -2;
+		if (!page_table[id][page].V) {
+			do_no_page(mem, id, page);
+			// 处理了缺页中断之后，当前页已经有效，返回这个页框号
+			// 当前问题：在处理缺页中断时，谁把内容写进了物理内存？
+			return page_table[id][page].frame; 
+			// printf("page is valid, but should be load into memory, call do_no_page()\n");
+			// return -2;
 		}
 		else { // 是出现在页表中的
-			page_reference(cpid, page);
-			return page_table[cpid][page].frame;
+			page_reference(id, page);
+			return page_table[id][page].frame;
 		}
 	}
 }
 
+void tlb_invalidate(int page)
+{
+	if (fb[page].valid == 0) {
+		return;
+	}
+	delete_node(page);
+	fb[page].valid = 0;
+	fb[page].cp = NULL;
+	printf("page %d is now set invalid\n", page);
+}
+
 int _TLB(int page) // check 1
 {
+<<<<<<< Updated upstream
 	// printf("Trying to find the frame for page %d\n", page);
+=======
+	puts("----------------------------------------------");
+	printf("[TLB] Looking for phys frame of page %d, pid=%d\n", page, cpid);
+>>>>>>> Stashed changes
 	if (fb[page].valid) { // a TLB hit
 		register_ref(page);
 		page_reference(cpid, page);
 		return fb[page].frame;
 	}
 	else { // a TLB miss
+<<<<<<< Updated upstream
 		// printf("Oops, a TLB miss!\n");
+=======
+		printf("[TLB] TLB miss...\n");
+>>>>>>> Stashed changes
 		int target = walk_table(page);
 		if (target == -1)
 			return -1;
-		else if (target == -2) {
-			target = do_no_page(mem, cpid, page);
-		}
-		qlen++;
+		//else if (target == -2) {
+		//	target = do_no_page(mem, cpid, page);
+		//}
 		lru_node *nPtr = _push_head(page);
 		fb[page].cp = nPtr, fb[page].frame = target, fb[page].valid = 1;
 		if (qlen == 1)
@@ -153,6 +183,8 @@ int _TLB(int page) // check 1
 			lru_node* cp = tail;
 			tail = cp->prev;
 			tail->next = NULL;
+			fb[cp->key].valid = 0;
+			fb[cp->key].cp = NULL;
 			free(cp);
 			qlen--;
 		}
@@ -189,16 +221,24 @@ int read_memory(char* buf, int ID, addr_t addr, int len)
 
 int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 {
+	puts("----------------------------------------------");
 	if (addr >> 22) {
 		fprintf(stderr, "trying to access %d\n, out of maximum valid memory!\n", addr);
 		return -1;
 	}
 	addr_t from = addr, to = addr + len, wlen = 0;
+<<<<<<< Updated upstream
 	// printf("%d %d %d\n", from , to, wlen);
 	while (from < to)
 	{
 		// try_to_write(cpid, from >> 12);
 		// printf("should call try_to_write()\n");
+=======
+	printf("[write_mem] st=%d, ed=%d\n", from, to);
+	while (from < to)
+	{
+		try_to_write(cpid, from >> 10);
+>>>>>>> Stashed changes
 		int frame = _TLB(from >> 10), offset = from & 0x3ff; // TODO handle invalid frame query
 		int writelen = min(0x400 - offset, to - from);
 		memcpy(mem + (frame << 10 | offset), wbuf + wlen, writelen);
@@ -207,6 +247,23 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 	}
 	return 0;
 }
+
+int mmu_read_frame(int frame, char *buf) {
+	if (frame >= 4096) {
+		return -1;
+	}
+	memcpy(buf, mem + (frame << 10), PAGE_SIZE);
+	return 0;
+}
+
+int mmu_write_frame(int frame, char *buf) {
+	if (frame >= 4096) {
+		return -1;
+	}
+	memcpy(mem + (frame << 10), buf, PAGE_SIZE);
+	return 0;
+}
+
 /*
 int main() {
 	ram_init();

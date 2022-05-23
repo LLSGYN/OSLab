@@ -7,6 +7,7 @@
         "dfvar.h": "c",
         "prostruct.h": "c",
         "lru.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "disk.h": "c"
     }
 }

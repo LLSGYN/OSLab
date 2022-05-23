@@ -1,5 +1,5 @@
-#include "memdefs.h"
 #include "lru.h"
+#include "swap.h"
 
 #include <stdio.h>
 
@@ -109,3 +109,90 @@ void dbg_residents(int ID)
 // 		break;
 // 	}
 // }
+
+/*
+我现在需要实现：
+一个内存页-磁盘块的双向映射关系
+*/
+
+// 查询下一个空闲磁盘块
+int get_next_free_block() {
+	int i = (blk_nr + 1) % block_count;
+	while (i != blk_nr) {
+		if (block_map[i] == -1) {
+			blk_nr = i;
+			return i;
+		}
+		i = (i + 1) % block_count;
+	}
+	printf("No swap space availalbe!\n");
+	return -1;
+}
+
+// 将进程ID的page页调入内存
+int swap_in(int ID, int page) {
+	printf("[swap-in]: pid=%d, page=%d\n", ID, page);
+	int blk = page_to_block[ID][page];
+	if (blk == -1) {
+		printf("FATAL! target block does not exist!\n");
+		exit(-1);
+	}
+	char *buf = (char*)malloc(block_szie * sizeof(char));
+	readBlock(blk, buf);
+	mmu_write_frame(page_table[ID][page].frame, buf);
+	// 释放该block
+	block_map[blk] = -1;
+	page_to_block[ID][page] = -1;
+	free(buf);
+	return 0;
+}
+
+// 将进程ID的page页写入磁盘
+int swap_out(int ID, int page) {
+	printf("[swap-out]: pid=%d, page=%d\n", ID, page);
+	// 已经调入内存的块没有了对应的磁盘块，分配一个新的
+	int blk = create_block(ID, page);
+	if (blk == -1) {
+		return -1;
+	}
+	char *buf = (char*)malloc(block_szie * sizeof(char));
+	mmu_read_frame(page_table[ID][page].frame, buf);
+	writeBlock(blk, buf);
+	free(buf);
+	return 0;
+}
+
+// 读入对应的内容，但是保留在磁盘中
+int disk_read(char *buf, int ID, int page) 
+{
+	int blk = page_to_block[ID][page];
+	if (blk == -1) {
+		printf("FATAL! target block does not exist!\n");
+		exit(-1);
+	}
+	readBlock(blk, buf);
+	return 0;
+}
+
+int disk_write(char *buf, int ID, int page) 
+{
+	int blk = page_to_block[ID][page];
+	if (blk == -1) {
+		printf("FATAL! cannot create new block\n");
+		exit(-1);
+	}
+	writeBlock(blk, buf);
+	return 0;
+}
+
+int create_block(int ID, int page) {
+	int blk = get_next_free_block();
+	if (blk == -1) {
+		printf("failed to swap out\n");
+		return -1;
+	}
+	// 占用block，记录映射关系
+	block_map[blk] = ID << 12 | page;
+	page_to_block[ID][page] = blk;
+	return blk;
+}

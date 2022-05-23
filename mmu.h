@@ -12,7 +12,8 @@ extern void ram_init();
 extern void dbg_tlb();
 
 void flush_tlb(int ID);
-
 int read_memory(char* buf, int ID, addr_t addr, int len);
-
 int write_memory(char* wbuf, int ID, addr_t addr, int len);
+int mmu_read_frame(int frame, char *buf);
+int mmu_write_frame(int frame, char *buf);
+void tlb_invalidate(int page);

@@ -14,19 +14,24 @@ unsigned int num_pages;
 unsigned char mem_map[NUM_PAGE];
 unsigned char dirty[NUM_PAGE];
 
+int blk_nr;
+int block_map[block_count];
+short page_to_block[MAX_PROCESS][NUM_PAGE];
+
 void mem_init() 
 {
 	// assume total ram is divisible by 4kb
-	num_pages = TOTAL_MEM / PAGE_SIZE;
 	frhead = (frnode*)malloc(sizeof(frnode));
 	frhead->next = NULL;
-	for (int i = 0; i < num_pages; ++i)
+	for (int i = 0; i < NUM_PAGE; ++i)
 	{
 		frnode* cur = (frnode*)malloc(sizeof(frnode));
 		cur->frame_id = i;
 		cur->next = frhead->next;
 		frhead->next = cur;
 	}
+	blk_nr = block_count - 1;
+	memset(block_map, -1, sizeof block_map);
 }
 
 int get_next_free()
@@ -41,33 +46,73 @@ int get_next_free()
 	return falloc;
 }
 
-int create_copy(int ID,  int page) 
+//void create_copy(int ID,  int page) 
+//{
+//	// TODO: what if no frame is available now?
+//	int to_alloc = get_next_free();
+//	mem_t buf[PAGE_SIZE];
+//	read_memory(buf, ID, page << 10, PAGE_SIZE); // copy the original page
+//	page_table[ID][page].frame = to_alloc;
+//	// 刷新TLB，因为这时我们的页面关系已经改变
+//	dbg_tlb();
+//	flush_tlb(ID);
+//	write_memory(buf, ID, page << 10, PAGE_SIZE); // now page table is modified
+//}
+//
+void do_new_copy(int ID)
 {
-	// TODO: what if no frame is available now?
-	int to_alloc = get_next_free();
-	mem_t buf[PAGE_SIZE];
-	read_memory(buf, ID, page << 12, PAGE_SIZE); // copy the original page
-	page_table[ID][page].frame = to_alloc;
-	// TODO: to write to the frame we want, a TLB flush is required
-	write_memory(buf, ID, page << 12, PAGE_SIZE); // now page table is modified
+	int fID = share_table[ID].father;
+	memory_alloc(ID, share_table[fID].n_pages, 1);
+	// 把之前父进程所有的内存、外存的内容进行copy
+	for (int i = 0; i < share_table[ID].n_pages; ++i)
+	{
+		char buf[PAGE_SIZE];
+		if (page_table[fID][i].V) {
+			mmu_read_frame(page_table[fID][i].frame, buf);
+		}
+		else {
+			disk_read(buf, fID, i);
+		}
+		if (page_table[ID][i].V) {
+			mmu_write_frame(page_table[ID][i].frame, buf);
+		}
+		else {
+			disk_write(buf, ID, i);
+		}
+	}
 }
 
 int try_to_write(int ID, int page)
 {
-	printf("trying to write page %d of prodexx %d\n", page, ID);
 	if (page_table[ID][page].P == 0) {
 		printf("error! trying to write to an invalid frame!\n");
 		return -1;
 	}
-	if (page_table[ID][page].RW == 1) { // not shared
-		page_table[ID][page].RW = 0;
-		int cur_frame = page_table[ID][page].frame;
-		if (mem_map[cur_frame] != 1) {
-			int new_alloc = create_copy(ID, page);
-			page_table[ID][page].frame = new_alloc;
-			mem_map[cur_frame]--;
+	int fID = share_table[ID].father;
+	int dr = share_table[ID].dr_share;
+
+	if (fID != -1) { 
+		// 依赖别的页表，给自己复制新的
+		// 创建自己的resident set
+		do_new_copy(ID);
+
+		// 修改share-link
+		if (dr != -1) {
+			share_table[dr].father = share_table[ID].father;
 		}
+		share_table[ID].father = -1;
 	}
+	else if (dr != -1) {
+		// 别的正在依赖自己，复制新的
+		// 给依赖自己的创建res set
+		do_new_copy(dr);
+
+		// 修改share-link
+		share_table[dr].father = share_table[ID].father;
+		share_table[ID].dr_share = -1;
+	}
+
+	dirty[page_table[ID][page].frame] = 1; // 写脏
 	return 0;
 }
 
@@ -78,48 +123,56 @@ int try_to_write(int ID, int page)
 // handling page fault, load the target page into the process
 int do_no_page(mem_t* mem, int ID, int page) {
 	int replaced_page = demand_replaced(ID, page);
-	if (replaced_page < 0)
-		return -1; // exception
-	int replaced_phys = -1;
-	if (page_table[ID][replaced_page].P)
-		replaced_phys = page_table[ID][replaced_page].frame;
-	if (replaced_phys == -1)
+	if (replaced_page < 0) {
+		printf("ERROR happened in do_no_page()!\n");
 		return -1;
-
-	if (dirty[replaced_phys])
-		printf("STORE PAGE TO DISK()\n");
-		// STORE_PAGE_FROM_DISK(); // TODO!
-	else {
-		// page is clean, a disk read is not required
 	}
+	int replaced_phys = -1;
+	replaced_phys = page_table[ID][replaced_page].frame;
 	page_table[ID][page].P = 1;
 	page_table[ID][page].V = 1;
 	page_table[ID][page].frame = replaced_phys;
 
-	// load content from disk
-	printf("LOAD PAGE FROM DISK()\n");
-	// mem_t* buf = LOAD_PAGE_FROM_DISK(); // dirty?
-	// memcpy(mem + replaced_phys * PAGE_SIZE, buf, PAGE_SIZE);
-	// }
+	if (dirty[replaced_phys]) {
+		printf("swapping page %d of process %d out\n", replaced_page, ID);
+		swap_out(ID, replaced_page);
+		page_table[ID][replaced_page].V = 0;
+		page_table[ID][replaced_page].frame = 0;
+	}
+	else {
+		printf("page is clean, nothing to do!\n");
+	}
+	swap_in(ID, page);
 	page_reference(ID, page);
 }
 
-int try_to_share(int ID, int fID)
+int try_to_share(int ID, int fID) // pay attention!
 {
-	share_table[ID].father = fID;
-	// share_table[ID].ref = 1;
-	// memcpy(page_table[ID], page_table[faID], sizeof(pg_t) * NUM_PAGE); // ����������ҳ��
+	int lst = fID;
+	while (share_table[lst].dr_share != -1)
+	{
+		lst = share_table[lst].dr_share;
+	}
+	share_table[ID].father = lst;
+	share_table[lst].dr_share = ID;
+	share_table[ID].n_pages = share_table[lst].n_pages;
+	share_table[ID].dr_share = -1;
+	// 从此复制了父进程的page_table
 	for (int i = 0; i < NUM_PAGE; ++i) {
+		page_table[fID][i].RW = 1; // to implement copy-on-write, set to read only
 		page_table[ID][i] = page_table[fID][i];
-		page_table[ID][i].RW = page_table[fID][i].RW = 1; // to implement copy-on-write, set to read only
 		if (page_table[ID][i].V) {
+			printf("ok: %d\n", page_table[ID][i].frame);
 			mem_map[page_table[ID][i].frame]++;
+		}
+		else if (page_table[ID][i].P) { // 这里可能会修改
+			page_to_block[ID][i] = page_to_block[fID][i];
 		}
 	}
 }
 
 // TODO: allocate memory, free memory
-int memory_alloc(int ID, int page_required) // TODO: fork, share page
+int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share page
 {
 	// printf("Trying to allocate %d pages to pid %d\n", page_required, ID);
 	if (ID >= MAX_PROCESS) {
@@ -127,16 +180,22 @@ int memory_alloc(int ID, int page_required) // TODO: fork, share page
 		return -1;
 	}
 	if (page_required > NUM_PAGE) {
-		printf("Unable to allocate %d\n", page_required);
+		printf("Unable to allocate %d pages\n", page_required);
 	}
 	
 	int faID = allPCB[ID].fatherProID;
 	share_table[ID].n_pages = page_required;
-	if (faID >= 0) { // ���������ӽ���
+	if (faID >= 0 && !realloc) { 
 		try_to_share(ID, faID);
+		// 对于fork的进程，应当共享一个resident set
+		// 每当出现一个共享，它们的resident set大小增加一个MAX_SIZE
+		//resident_add(ID, min(MAX_RESIDENTS, page_required));
 	}
-	else { // ���´����Ľ��̷����ڴ棬�޸�����
-		share_table[ID].father = -1;
+	else { 
+		if (!realloc) {
+			share_table[ID].father = -1;
+			share_table[ID].dr_share = -1;
+		}
 
 		int i = 0;
 		while (i < page_required && i < MAX_RESIDENTS) {
@@ -145,17 +204,19 @@ int memory_alloc(int ID, int page_required) // TODO: fork, share page
 				break;
 			}
 			page_table[ID][i].frame = alloc;
+			printf("%d\n", alloc);
 			mem_map[alloc]++;
 			page_table[ID][i].V = 1;
 			page_table[ID][i].P = 1;
 			page_table[ID][i].RW = 0;
 			i++;
 		}
-		while (i < page_required) // no free frame now
+		while (i < page_required)
 		{
 			page_table[ID][i].V = 0;
 			page_table[ID][i].P = 1;
 			page_table[ID][i].RW = 0;
+			create_block(ID, i); // 没有写入内存的，创建相应磁盘块
 			i++;
 		}
 		resident_init(ID, min(MAX_RESIDENTS, page_required));
@@ -205,26 +266,80 @@ int memory_free(int ID) // release memory when process is terminated
 	share_table[ID].n_pages = 0;
 }
 
-// int main()
-// {
-// 	ram_init();
-// 	mem_init();
-// 	allPCB[1].fatherProID = -1;
-// 	memory_alloc(1, 50);
-// 	flush_tlb(1);
-// 	dbg_residents(1);
-// 	// return 0;
-// 	char buf[16] = "hello world!";
-// 	write_memory(buf, 1, 17000, 13);
-// 	// char buf1[16] = "another text";
-// 	// write_memory(buf1, 1, 10000, 13);
-// 	// dbg_residents(1);
-// 	char nb[16];
-// 	read_memory(nb, 1, 17000, 13);
-// 	puts(nb);
-// 	// read_memory(nb, 1, 10000, 13);
-// 	// puts(nb);
-// 	dbg_residents(1);
+/*
+ * TODO:
+ * 子进程 ok
+ * Free&free  
+ * commit
+ * clock对接
+ * 脏页是设计页框还是页表？
+*/
 
-// 	return 0;
-// }
+/*
+int main()
+{
+	InitDisk();
+	ram_init();
+	mem_init();
+	for (int i = 0; i < NUM_PAGE; ++i) {
+		// 假设这些页都被写脏
+		dirty[i] = 1;
+	}
+	allPCB[1].fatherProID = -1;
+	allPCB[2].fatherProID = 1;
+	allPCB[3].fatherProID = 1;
+	memory_alloc(1, 16, 0);
+	dbg_residents(1);
+	char buf0[] = "hello hello hello";
+	char buf1[] = "aaaaaaaaaaaoooooo";
+	char buf2[] = "114514 1919810 11";
+	char buf3[] = "van darkholme art";
+	char rb[30];
+	flush_tlb(1);
+	write_memory(buf0, 1, 1010, 18);
+	write_memory(buf1, 1, 3000, 18);
+	for (int i = 0; i < 16; ++i)
+	{
+		read_memory(rb, 1, i * 1024, 20);
+	}
+	memory_alloc(2, 16, 0);
+	memory_alloc(3, 16, 0);
+	flush_tlb(3);
+	read_memory(rb, 3, 1010, 18);
+	puts(rb);
+	read_memory(rb, 3, 3000, 18);
+	puts(rb);
+	flush_tlb(2);
+	read_memory(rb, 2, 1010, 18);
+	puts(rb);
+	dbg_residents(1);
+	dbg_residents(2);
+	dbg_residents(3);
+	return 0;
+	flush_tlb(2);
+	write_memory(buf2, 2, 1010, 18);
+	dbg_residents(1);
+	dbg_residents(2);
+	flush_tlb(3);
+	write_memory(buf3, 3, 3000, 18);
+	dbg_residents(2);
+	dbg_residents(3);
+	for (int i = 0; i < 16; ++i)
+	{
+		read_memory(rb, 3, i * 1024, 20);
+		dbg_residents(3);
+	}
+	flush_tlb(1);
+	read_memory(rb, 1, 1010, 18);
+	puts(rb);
+	read_memory(rb, 1, 3000, 18);
+	puts(rb);
+	flush_tlb(2);
+	read_memory(rb, 2, 1010, 18);
+	puts(rb);
+	flush_tlb(3);
+	read_memory(rb, 3, 3000, 18);
+	puts(rb);
+	return 0;
+}
+*/
