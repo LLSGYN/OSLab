@@ -10,6 +10,7 @@
 typedef struct {
     int father;
     int dr_share;
+    int master;
     int n_pages;
 } share_t;
 

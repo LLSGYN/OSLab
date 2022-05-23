@@ -32,6 +32,10 @@ void mem_init()
 	}
 	blk_nr = block_count - 1;
 	memset(block_map, -1, sizeof block_map);
+	for (int i = 0; i < MAX_PROCESS; ++i)
+	{
+		share_table[i].master = -1;
+	}
 }
 
 int get_next_free()
@@ -154,12 +158,13 @@ int try_to_share(int ID, int fID) // pay attention!
 		lst = share_table[lst].dr_share;
 	}
 	share_table[ID].father = lst;
+	share_table[ID].master = fID;
 	share_table[lst].dr_share = ID;
 	share_table[ID].n_pages = share_table[lst].n_pages;
 	share_table[ID].dr_share = -1;
 	// 从此复制了父进程的page_table
 	for (int i = 0; i < NUM_PAGE; ++i) {
-		page_table[fID][i].RW = 1; // to implement copy-on-write, set to read only
+		//page_table[fID][i].RW = 1; // to implement copy-on-write, set to read only
 		page_table[ID][i] = page_table[fID][i];
 		if (page_table[ID][i].V) {
 			mem_map[page_table[ID][i].frame]++;
@@ -193,9 +198,10 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 	}
 	else { 
 		if (!realloc) {
-			puts("triggered!");
+			//puts("triggered!");
 			share_table[ID].father = -1;
 			share_table[ID].dr_share = -1;
+			share_table[ID].master = -1;
 		}
 		int i = 0;
 		while (i < page_required && i < MAX_RESIDENTS) {
@@ -208,14 +214,14 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 			mem_map[alloc]++;
 			page_table[ID][i].V = 1;
 			page_table[ID][i].P = 1;
-			page_table[ID][i].RW = 0;
+			//page_table[ID][i].RW = 0;
 			i++;
 		}
 		while (i < page_required)
 		{
 			page_table[ID][i].V = 0;
 			page_table[ID][i].P = 1;
-			page_table[ID][i].RW = 0;
+			//page_table[ID][i].RW = 0;
 			create_block(ID, i); // 没有写入内存的，创建相应磁盘块
 			i++;
 		}
@@ -226,6 +232,7 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 void free_page(unsigned long addr)
 {
 	if (mem_map[addr]--) {
+		printf("[free-page] released frame %d\n", addr);
 		frnode* cur = (frnode*)malloc(sizeof(frnode));
 		cur->frame_id = addr;
 		cur->next = frhead->next;
@@ -238,32 +245,62 @@ void free_page(unsigned long addr)
 
 int memory_free(int ID) // release memory when process is terminated
 {
-	printf("Trying to free memory of pid %d\n", ID);
-	if (share_table[ID].father >= 0) {
+	printf("[free] Trying to free proc %d\n", ID);
+	int fID = share_table[ID].father;
+	int dr = share_table[ID].dr_share;
+	dbg_residents(ID);
+	if (fID >= 0) {
+		// 是共享父进程的页表：
+		// 清空页表，删除共享链
 		for (int i = 0; i < NUM_PAGE; ++i)
 		{
-			if (page_table[ID][i].V) {
-				mem_map[page_table[ID][i].frame]--;
+			if (page_table[fID][i].V) {
+				mem_map[page_table[fID][i].frame]--;
 			}
 			page_table[ID][i].frame = 0;
 			page_table[ID][i].P = 0;
 			page_table[ID][i].V = 0;
 		}
+		if (dr != -1)
+			share_table[dr].father = fID;
+		share_table[fID].dr_share = dr;
 	}
 	else {
+		// 自己就是父进程
+		// 如果有依赖自己的，先把它们都释放掉
+		for (int i = 0; i < MAX_PROCESS; ++i) {
+			if (i == ID) continue;
+			if (share_table[i].master == ID) {
+				memory_free(i);
+			}
+		}
+		// 清空自己的页表，内存，外存
 		for (int i = 0; i < NUM_PAGE; ++i) {
-			page_table[ID][i].P = 0;
-			int phys_frame = page_table[ID][i].frame;
 			if (page_table[ID][i].V == 1) {
+				// 在内存里，释放这一个物理帧
+				int phys_frame = page_table[ID][i].frame;
 				free_page(phys_frame);
-				page_table[ID][i].V = 0;
 				dirty[phys_frame] = 0;
 			}
+			else if (page_table[ID][i].P) {
+				// 有效，删除外存上的
+				free_block(ID, i);
+			}
+			page_table[ID][i].frame = 0;
+			page_table[ID][i].P = 0;
+			page_table[ID][i].V = 0;
 		}
 		destroy_residents(ID); 
 	}
 	share_table[ID].father = -1;
+	share_table[ID].dr_share = -1;
+	share_table[ID].master = -1;
 	share_table[ID].n_pages = 0;
+}
+
+void command_free()
+{
+	printf("\ntotal used free shared");
 }
 
 /*
@@ -312,33 +349,6 @@ int main()
 	flush_tlb(2);
 	read_memory(rb, 2, 1010, 18);
 	puts(rb);
-	dbg_residents(1);
-	dbg_residents(2);
-	dbg_residents(3);
-	return 0;
-	flush_tlb(2);
-	write_memory(buf2, 2, 1010, 18);
-	dbg_residents(1);
-	dbg_residents(2);
-	flush_tlb(3);
-	write_memory(buf3, 3, 3000, 18);
-	dbg_residents(2);
-	dbg_residents(3);
-	for (int i = 0; i < 16; ++i)
-	{
-		read_memory(rb, 3, i * 1024, 20);
-		dbg_residents(3);
-	}
-	flush_tlb(1);
-	read_memory(rb, 1, 1010, 18);
-	puts(rb);
-	read_memory(rb, 1, 3000, 18);
-	puts(rb);
-	flush_tlb(2);
-	read_memory(rb, 2, 1010, 18);
-	puts(rb);
-	flush_tlb(3);
-	read_memory(rb, 3, 3000, 18);
-	puts(rb);
+	memory_free(2);
 	return 0;
 }*/

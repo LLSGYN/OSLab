@@ -152,6 +152,10 @@ void dbg_LRU(int ID)
 	}
 	printf("------DEBUG PROCESS %d------\n", ID);
 	printf("resident set info: %d\n", resident_size[ID]);
+	if (resident_size[ID] == 0) {
+		printf("\n\n");
+		return;
+	}
 	lruptr cur = head[ID]->next;
 	// printf("head=%d, tail=%d\n", head[ID]->next->page_info.page, tail[ID]->page_id);
 	printf("context:\n");

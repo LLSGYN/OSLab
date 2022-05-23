@@ -199,3 +199,14 @@ int create_block(int ID, int page) {
 	page_to_block[ID][page] = blk;
 	return blk;
 }
+
+int free_block(int ID, int page) {
+	printf("[free blk] pid=%d, page=%d\n", ID, page);
+	int blk = page_to_block[ID][page];
+	if (blk == -1) {
+		printf("FATAL! target block does not exist!\n");
+		exit(-1);
+	}
+	block_map[blk] = -1;
+	page_to_block[ID][page] = -1;
+}
