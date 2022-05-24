@@ -263,17 +263,12 @@ int memory_free(int ID) // release memory when process is terminated
 		}
 		if (dr != -1)
 			share_table[dr].father = fID;
-		share_table[fID].dr_share = dr;
+		if (share_table[fID].dr_share != -1) {
+			share_table[fID].dr_share = dr;
+		}
 	}
 	else {
 		// 自己就是父进程
-		// 如果有依赖自己的，先把它们都释放掉
-		for (int i = 0; i < MAX_PROCESS; ++i) {
-			if (i == ID) continue;
-			if (share_table[i].master == ID) {
-				memory_free(i);
-			}
-		}
 		// 清空自己的页表，内存，外存
 		for (int i = 0; i < NUM_PAGE; ++i) {
 			if (page_table[ID][i].V == 1) {
@@ -311,7 +306,6 @@ void command_free()
  * clock对接
  * 脏页是设计页框还是页表？
 */
-
 /*
 int main()
 {
@@ -350,5 +344,16 @@ int main()
 	read_memory(rb, 2, 1010, 18);
 	puts(rb);
 	memory_free(2);
+	for (int i = 1; i <= 3; ++i) {
+		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
+	}
+	memory_free(1);
+	for (int i = 1; i <= 3; ++i) {
+		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
+	}
+	memory_free(3);
+	for (int i = 1; i <= 3; ++i) {
+		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
+	}
 	return 0;
 }*/
