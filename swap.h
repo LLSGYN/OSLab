@@ -18,6 +18,7 @@ int disk_write(char *buf, int ID, int page);
 int swap_in(int ID, int page);
 int swap_out(int ID, int page);
 int create_block(int ID, int page);
+int free_block(int ID, int page);
 
 int blk_nr;
 int block_map[block_count];
