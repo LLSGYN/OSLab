@@ -39,6 +39,7 @@ int remove_node(int ID, int page)
 {
 	lruptr target = get_page_ptr(ID, page);
 	if (target == NULL) {
+		dbg_LRU(ID);
 		fprintf(stderr, "trying to delete non-existing page!\n");
 		return -1;
 	}
@@ -131,6 +132,9 @@ void LRU_destroy(int ID)
 	if (allPCB[ID].fatherProID != -1) {
 		printf("ERROR! cannot destroy the resident set of parent process!");
 		return;
+	}
+	if (head[ID] == NULL) {
+		puts("???");
 	}
 	lruptr phead = head[ID], cur = phead->next;
 	while (cur) {

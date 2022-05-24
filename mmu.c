@@ -120,6 +120,7 @@ int walk_table(int page) // check 1
 		id = share_table[id].father;
 	}
 	if (!page_table[id][page].P) {
+		printf("%d\n", share_table[id].n_pages * 1024);
 		fprintf(stderr, "trying to access invalid address\n");
 		return -1;
 	}
@@ -195,6 +196,11 @@ int read_memory(char* buf, int ID, addr_t addr, int len)
 	// now the memory we want to read is valid, allocate the buffer
 	char* rb = buf;
 	addr_t from = addr, to = addr + len, wlen = 0;
+	if (to >= share_table[ID].n_pages * PAGE_SIZE) {
+		printf("memory out of boundary!\n");
+		printf("stop reading memory");
+		return -1;
+	}
 	while (from < to)
 	{
 
@@ -222,6 +228,11 @@ int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 	}
 	addr_t from = addr, to = addr + len, wlen = 0;
 	printf("[write_mem] st=%d, ed=%d\n", from, to);
+	if (to >= share_table[ID].n_pages * PAGE_SIZE) {
+		printf("memory out of boundary!\n");
+		printf("stop writing memory");
+		return -1;
+	}
 	while (from < to)
 	{
 		try_to_write(cpid, from >> 10);

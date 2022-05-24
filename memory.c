@@ -35,6 +35,8 @@ void mem_init()
 	for (int i = 0; i < MAX_PROCESS; ++i)
 	{
 		share_table[i].master = -1;
+		share_table[i].father = -1;
+		share_table[i].dr_share = -1;
 	}
 }
 
@@ -105,6 +107,7 @@ int try_to_write(int ID, int page)
 			share_table[dr].father = share_table[ID].father;
 		}
 		share_table[ID].father = -1;
+		share_table[ID].master = -1;
 	}
 	else if (dr != -1) {
 		// 别的正在依赖自己，复制新的
@@ -114,6 +117,11 @@ int try_to_write(int ID, int page)
 		// 修改share-link
 		share_table[dr].father = share_table[ID].father;
 		share_table[ID].dr_share = -1;
+		share_table[dr].master = -1;
+		int tdr = share_table[dr].dr_share;
+		while (tdr != -1) {
+			share_table[tdr].master = dr;
+		}
 	}
 
 	dirty[page_table[ID][page].frame] = 1; // 写脏
@@ -291,6 +299,10 @@ int memory_free(int ID) // release memory when process is terminated
 	share_table[ID].dr_share = -1;
 	share_table[ID].master = -1;
 	share_table[ID].n_pages = 0;
+	for (int i = 0; i < 5; ++i) {
+		printf("id=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
+	}
+	puts("");
 }
 
 void command_free()
