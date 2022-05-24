@@ -67,7 +67,7 @@ int get_next_free()
 //
 void do_new_copy(int ID)
 {
-	int fID = share_table[ID].father;
+	int fID = share_table[ID].master;
 	memory_alloc(ID, share_table[fID].n_pages, 1);
 	// 把之前父进程所有的内存、外存的内容进行copy
 	for (int i = 0; i < share_table[ID].n_pages; ++i)
@@ -134,6 +134,7 @@ int try_to_write(int ID, int page)
 
 // handling page fault, load the target page into the process
 int do_no_page(mem_t* mem, int ID, int page) {
+	printf("[page fault] try find (%d,%d) in disk\n", ID, page);
 	int replaced_page = demand_replaced(ID, page);
 	if (replaced_page < 0) {
 		printf("ERROR happened in do_no_page()!\n");
@@ -148,12 +149,13 @@ int do_no_page(mem_t* mem, int ID, int page) {
 	if (dirty[replaced_phys]) {
 		printf("swapping page %d of process %d out\n", replaced_page, ID);
 		swap_out(ID, replaced_page);
-		page_table[ID][replaced_page].V = 0;
-		page_table[ID][replaced_page].frame = 0;
 	}
 	else {
 		printf("page is clean, nothing to do!\n");
+		create_block(ID, replaced_page);
 	}
+	page_table[ID][replaced_page].V = 0;
+	page_table[ID][replaced_page].frame = 0;
 	swap_in(ID, page);
 	page_reference(ID, page);
 }
@@ -199,6 +201,7 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 	share_table[ID].n_pages = page_required;
 	if (faID >= 0 && !realloc) { 
 		printf("process %d created create a subprocess %d!\n", faID, ID);
+		assert(ID != faID);
 		try_to_share(ID, faID);
 		// 对于fork的进程，应当共享一个resident set
 		// 每当出现一个共享，它们的resident set大小增加一个MAX_SIZE
@@ -324,48 +327,10 @@ int main()
 	InitDisk();
 	ram_init();
 	mem_init();
-	for (int i = 0; i < NUM_PAGE; ++i) {
-		// 假设这些页都被写脏
-		dirty[i] = 1;
-	}
-	allPCB[1].fatherProID = -1;
-	allPCB[2].fatherProID = 1;
-	allPCB[3].fatherProID = 1;
-	memory_alloc(1, 16, 0);
-	dbg_residents(1);
-	char buf0[] = "hello hello hello";
-	char buf1[] = "aaaaaaaaaaaoooooo";
-	char buf2[] = "114514 1919810 11";
-	char buf3[] = "van darkholme art";
-	char rb[30];
-	flush_tlb(1);
-	write_memory(buf0, 1, 1010, 18);
-	write_memory(buf1, 1, 3000, 18);
-	for (int i = 0; i < 16; ++i)
-	{
-		read_memory(rb, 1, i * 1024, 20);
-	}
-	memory_alloc(2, 16, 0);
-	memory_alloc(3, 16, 0);
-	flush_tlb(3);
-	read_memory(rb, 3, 1010, 18);
-	puts(rb);
-	read_memory(rb, 3, 3000, 18);
-	puts(rb);
-	flush_tlb(2);
-	read_memory(rb, 2, 1010, 18);
-	puts(rb);
-	memory_free(2);
-	for (int i = 1; i <= 3; ++i) {
-		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
-	}
-	memory_free(1);
-	for (int i = 1; i <= 3; ++i) {
-		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
-	}
-	memory_free(3);
-	for (int i = 1; i <= 3; ++i) {
-		printf("pid=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
-	}
+	allPCB[0].fatherProID = -1;
+	memory_alloc(0, 15, 0);
+	flush_tlb(0);
+	char buf[3000];
+	write_memory(buf, 0, 11259, 2524);
 	return 0;
 }*/

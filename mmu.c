@@ -134,6 +134,7 @@ int walk_table(int page) // check 1
 			// return -2;
 		}
 		else { // 是出现在页表中的
+			printf("[walk tab] find (%d,%d) in page table\n", id, page);
 			page_reference(id, page);
 			return page_table[id][page].frame;
 		}

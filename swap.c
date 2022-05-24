@@ -161,6 +161,8 @@ int swap_out(int ID, int page) {
 	char *buf = (char*)malloc(block_szie * sizeof(char));
 	mmu_read_frame(page_table[ID][page].frame, buf);
 	writeBlock(blk, buf);
+	block_map[blk] = ID << 12 | page;
+	page_to_block[ID][page] = blk;
 	free(buf);
 	return 0;
 }
