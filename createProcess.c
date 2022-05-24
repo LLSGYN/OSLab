@@ -174,10 +174,15 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 	}
 	for (int i = 0; i < allPCB[Id].eventNum; i++) {
 		fscanf(processfile, "%d %d %d", &allPCB[Id].events[i].eventType, &allPCB[Id].events[i].time, &allPCB[Id].events[i].needRAM);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "\t event %d: eventType: %d needstime: %d\n", i, allPCB[Id].events[i].eventType, allPCB[Id].events[i].time);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		allPCB[Id].pageNum += allPCB[Id].events[i].needRAM;
 		if (i == 0) {  //保证第一个事件是占用CPU
 			if (allPCB[Id].events[i].eventType != occupyCPU && allPCB[Id].events[i].eventType != createProcess) {
-				printf("Create process %d failed,the first event is wrong!\n", Id);
+				WaitForSingleObject(writeMutex, INFINITE);
+				fprintf(logs, "Create process %d failed,the first event is wrong!\n", Id);
+				ReleaseSemaphore(writeMutex, 1, NULL);
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
@@ -194,7 +199,9 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 		else {
 			//若进程申请的时间或内存超出限制
 			if (allPCB[Id].events[i].time > MAX_NEED_TIME || allPCB[Id].events[i].needRAM > MAX_PAGE_NUM) {
-				printf("Create process %d failed,the process has too much time or memory!\n", Id);
+				WaitForSingleObject(writeMutex, INFINITE);
+				fprintf(logs, "Create process %d failed,the process has too much time or memory!\n", Id);
+				ReleaseSemaphore(writeMutex, 1, NULL);
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
@@ -207,7 +214,9 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				fscanf(processfile, "%d", &allPCB[Id].events[i].eventMsg.IDOfIO);
 				//保证该事件所使用的IO的合理性
 				if (allPCB[Id].events[i].eventMsg.IDOfIO >= IO_NUM) {
-					printf("Create process %d failed,the process uses illogical IO!\n", Id);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "Create process %d failed,the process uses illogical IO!\n", Id);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将信息打印到日志文件中，还未实现
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -222,7 +231,9 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				int offset; //偏移量
 				fscanf(processfile, "%d %d", &allPCB[Id].pageNum, &offset);
 				if (offset >= 1024) {  //保证偏移量为0-1023之间
-					printf("Create process %d failed,offset too large.\n", Id);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "Create process %d failed,offset too large.\n", Id);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -242,7 +253,9 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 			else if (allPCB[Id].events[i].eventType == heapAlloc || allPCB[Id].events[i].eventType == stackAlloc) {
 				fscanf(processfile, "%d", &allPCB[i].events[i].eventMsg.allocNum);  //读取页数
 				if (allPCB[Id].events[i].eventMsg.allocNum > MAX_PAGE_NUM) {
-					printf("Create process %d failed,apply too many pages", Id);
+					WaitForSingleObject(writeMutex, INFINITE);
+					fprintf(logs, "Create process %d failed,apply too many pages", Id);
+					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -252,15 +265,6 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				}
 				allPCB[Id].events[i].time = MY_ALLOC_TIME;
 			}
-			//若进程事件为编译，则删除该进程
-			// else if (allPCB[Id].events[i].eventType == compile) {
-			// 	printf("Create process %d failed,compile is not permissed.\n", Id);
-			// 	//将打印信息写入到日志文件中
-			// 	usedProcessID[Id] = 0;
-			// 	processCNT--;
-			// 	fclose(processfile);
-			// 	return 0;
-			// }
 		}
 	}
 	fclose(processfile);
