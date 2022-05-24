@@ -20,6 +20,7 @@ int GetNextUnusedProcessID()
 
 int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 {
+	srand(time(NULL));
 	int nowID = GetNextUnusedProcessID();//获取进程ID
 	if (nowID == -1)//获取ID号失败
 	{
@@ -28,7 +29,6 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		ReleaseSemaphore(writeMutex, 1, NULL);
 		return 0;
 	}
-	srand(time(NULL));
 	WaitForSingleObject(allPCB[nowID].processMutex, INFINITE);
 	processCNT++;//进程总数加一
 	WaitForSingleObject(writeMutex, INFINITE);
@@ -46,9 +46,6 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	else//非抢占的静态优先级
 		allPCB[nowID].priority = rand() % (PRIORITY_NUM - 1);//随机的一个优先级
 
-	WaitForSingleObject(writeMutex, INFINITE);
-	fprintf(logs, "----the priority of process is %d\n", allPCB[nowID].priority);
-	ReleaseSemaphore(writeMutex, 1, NULL);
 	
 	allPCB[nowID].eventID = 0;
 	allPCB[nowID].eventTime = 0;
@@ -57,28 +54,22 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	//调用接口函数向内存模块申请内存
 	memory_alloc(nowID, allPCB[nowID].pageNum, 0);
 	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "----the priority of process is %d\n", allPCB[nowID].priority);
 	fprintf(logs, "----event total RAM is %d\n", allPCB[nowID].pageNum);
-	ReleaseSemaphore(writeMutex, 1, NULL);
 
 	allPCB[nowID].eventNum = rand() % MAX_EVENT + 1;
-	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "----event total num is %d\n", allPCB[nowID].eventNum);
-	ReleaseSemaphore(writeMutex, 1, NULL);
 	int mem_cnt = 0;//被占用的内存页数
 	for (int i = 0; i < allPCB[nowID].eventNum; i++)
 	{
-		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "\tevent %d:", i);
-		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (i == 0)
 			allPCB[nowID].events[i].eventType = occupyCPU;//第一个事件总是去使用CPU
 		else
 			allPCB[nowID].events[i].eventType = rand() % MAX_EVENT_TYPE;//事件类型随机，不含编译类型事件
 			// allPCB[nowID].events[i].eventType = 5;// 时间为占用IO
 
-		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "  eventType: %d", allPCB[nowID].events[i].eventType);
-		ReleaseSemaphore(writeMutex, 1, NULL);
 		if (fatherProcessID != -1 && allPCB[nowID].events[i].eventType == createProcess)
 			allPCB[nowID].events[i].eventType = occupyCPU;//将子进程的创建进程事件视为特殊的占用CPU的事件
 
@@ -87,9 +78,7 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		else if (allPCB[nowID].events[i].eventType == occupyIO)//占用IO事件
 		{
 			allPCB[nowID].events[i].eventMsg.IDOfIO = rand() % IO_NUM;//分配IO号
-			WaitForSingleObject(writeMutex, INFINITE);
 			fprintf(logs, "  alloc IO_num: %d", allPCB[nowID].events[i].eventMsg.IDOfIO);
-			ReleaseSemaphore(writeMutex, 1, NULL);
 			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //事件所需时间片数随机
 		}
 		else if (allPCB[nowID].events[i].eventType == heapAlloc || allPCB[nowID].events[i].eventType == stackAlloc)//申请堆栈事件
@@ -118,10 +107,9 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		}
 		else//occupyCPU
 			allPCB[nowID].events[i].time = rand() % MAX_NEED_TIME + 1; //事件所需时间片数随机
-		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "  needs time: %d\n", allPCB[nowID].events[i].time);
-		ReleaseSemaphore(writeMutex, 1, NULL);
 	}
+	ReleaseSemaphore(writeMutex, 1, NULL);
 
 	allPCB[nowID].CPUtime = 0;
 	allPCB[nowID].startTime = time(NULL); //记录进程创建时间
@@ -172,17 +160,15 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 		fclose(processfile);
 		return 0;
 	}
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "run the file:\n");
 	for (int i = 0; i < allPCB[Id].eventNum; i++) {
 		fscanf(processfile, "%d %d %d", &allPCB[Id].events[i].eventType, &allPCB[Id].events[i].time, &allPCB[Id].events[i].needRAM);
-		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "\t event %d: eventType: %d needstime: %d\n", i, allPCB[Id].events[i].eventType, allPCB[Id].events[i].time);
-		ReleaseSemaphore(writeMutex, 1, NULL);
 		allPCB[Id].pageNum += allPCB[Id].events[i].needRAM;
 		if (i == 0) {  //保证第一个事件是占用CPU
 			if (allPCB[Id].events[i].eventType != occupyCPU && allPCB[Id].events[i].eventType != createProcess) {
-				WaitForSingleObject(writeMutex, INFINITE);
 				fprintf(logs, "Create process %d failed,the first event is wrong!\n", Id);
-				ReleaseSemaphore(writeMutex, 1, NULL);
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
@@ -193,15 +179,13 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 			// 分配时间片
 			// if (allPCB[Id].events[i].eventType == occupyCPU)
 				// allPCB[Id].events[i].time = rand() % MAX_NEED_TIME + 1; //事件所需时间片数随机
-			if (allPCB[Id].events[i].eventType == createProcess)
-				allPCB[Id].events[i].time = CREATE_PROCESS_TIME;
+			// if (allPCB[Id].events[i].eventType == createProcess)
+				// allPCB[Id].events[i].time = CREATE_PROCESS_TIME;
 		}
 		else {
 			//若进程申请的时间或内存超出限制
 			if (allPCB[Id].events[i].time > MAX_NEED_TIME || allPCB[Id].events[i].needRAM > MAX_PAGE_NUM) {
-				WaitForSingleObject(writeMutex, INFINITE);
 				fprintf(logs, "Create process %d failed,the process has too much time or memory!\n", Id);
-				ReleaseSemaphore(writeMutex, 1, NULL);
 				//将信息打印到日志文件中，还未实现
 				usedProcessID[Id] = 0;
 				processCNT--;
@@ -214,9 +198,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				fscanf(processfile, "%d", &allPCB[Id].events[i].eventMsg.IDOfIO);
 				//保证该事件所使用的IO的合理性
 				if (allPCB[Id].events[i].eventMsg.IDOfIO >= IO_NUM) {
-					WaitForSingleObject(writeMutex, INFINITE);
 					fprintf(logs, "Create process %d failed,the process uses illogical IO!\n", Id);
-					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将信息打印到日志文件中，还未实现
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -231,9 +213,7 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				int offset; //偏移量
 				fscanf(processfile, "%d %d", &allPCB[Id].pageNum, &offset);
 				if (offset >= 1024) {  //保证偏移量为0-1023之间
-					WaitForSingleObject(writeMutex, INFINITE);
 					fprintf(logs, "Create process %d failed,offset too large.\n", Id);
-					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -247,15 +227,14 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 				allPCB[Id].events[i].eventMsg.wrMsg.startPageID = start_page;
 				allPCB[Id].events[i].eventMsg.wrMsg.offset = offset;
 				allPCB[Id].events[i].eventMsg.wrMsg.len = len;
-				allPCB[Id].events[i].time = (offset + len + 1024) / 1024 * TIME_PER_PAGE;
+				//allPCB[Id].events[i].time = (offset + len + 1024) / 1024 * TIME_PER_PAGE;
+				// allPCB[Id].events[i].time = 1;
 			}
 			//若进程事件为申请堆栈，保证其合理性
 			else if (allPCB[Id].events[i].eventType == heapAlloc || allPCB[Id].events[i].eventType == stackAlloc) {
 				fscanf(processfile, "%d", &allPCB[i].events[i].eventMsg.allocNum);  //读取页数
 				if (allPCB[Id].events[i].eventMsg.allocNum > MAX_PAGE_NUM) {
-					WaitForSingleObject(writeMutex, INFINITE);
 					fprintf(logs, "Create process %d failed,apply too many pages", Id);
-					ReleaseSemaphore(writeMutex, 1, NULL);
 					//将打印信息写入到日志文件中
 					usedProcessID[Id] = 0;
 					processCNT--;
@@ -263,10 +242,11 @@ int CreateMyDiyProcess(char* processName, int fatherProcessID, char* processFile
 					fclose(processfile);
 					return 0;
 				}
-				allPCB[Id].events[i].time = MY_ALLOC_TIME;
+				// allPCB[Id].events[i].time = MY_ALLOC_TIME;
 			}
 		}
 	}
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	fclose(processfile);
 	allPCB[Id].CPUtime = 0;
 	allPCB[Id].startTime = time(NULL); //记录进程创建时间

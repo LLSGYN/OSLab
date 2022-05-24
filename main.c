@@ -16,9 +16,6 @@ int main()
 	Init();//初始化
 	logs = fopen("../logs.txt", "w");
 	setbuf(logs, NULL);
-	// CreateMyProcess("init process1", -1);//初始进程1
-	// CreateMyProcess("init process2", -1);//初始进程2
-	// CreateMyProcess("init process3", -1);//初始进程3
 	HANDLE timeRunThread = CreateThread(NULL, 0, TimeRun, 0, 0, NULL);               //运行时间片模拟线程
 	HANDLE dispatchCPUThread = CreateThread(NULL, 0, DispatchCPU, 0, 0, NULL);       //CPU调度线程
 	HANDLE virCPUThread = CreateThread(NULL, 0, VirCPU, 0, 0, NULL);                 //CPU的模拟运行
@@ -39,12 +36,21 @@ int main()
 
 	shell();
 
-	//DestorySemaphore();
+	DestorySemaphore();
 	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "virOS shutdown...\n");
 	ReleaseSemaphore(writeMutex, 1, NULL);
 	return 0;
 }
+/*
+create a
+create b
+create c
+create d
+create e
+create f
+create g
+*/
 
 void DestorySemaphore()
 {
@@ -89,7 +95,7 @@ void DestorySemaphore()
 	}
 	CloseHandle(readyQueue.totalCnt);
 	CloseHandle(memoryQueue.totalCnt);
-	for (int i = 0; i < MAX_PROCESS; i++)
-		CloseHandle(allPCB[i].processMutex);
+	// for (int i = 0; i < MAX_PROCESS; i++)
+		// CloseHandle(allPCB[i].processMutex);
 	CloseHandle(writeMutex);
 }

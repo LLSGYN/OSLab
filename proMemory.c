@@ -76,7 +76,6 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 			}
 			else
 			{
-				//printf("memory test3\n");
 				ReleaseSemaphore(allPCB[processInMemory].processMutex, 1, NULL);
 				ReleaseSemaphore(proInMemMutex, 1, NULL);
 			}
@@ -93,9 +92,7 @@ DWORD WINAPI MyMemoryControl(LPVOID lpParamter)
 
 DWORD WINAPI DispatchMemory(LPVOID lpParamter)
 {
-#ifdef DEBUG
 	fprintf(logs, "----Dispatch memory start...\n");
-#endif
 	while (1)
 	{
 		WaitForSingleObject(breakMemory, INFINITE); //等待Memory中断以进行Memory调度
