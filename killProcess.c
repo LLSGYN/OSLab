@@ -100,6 +100,7 @@ void KillProcess(int ID)//强制销毁指定的进程
 			fprintf(logs, "----Memory released...\n");
 			ReleaseSemaphore(writeMutex, 1, NULL);
 		}
+		memory_free(ID);
 		ReleaseSemaphore(killMutex, 1, NULL);//释放该权限
 		KillProFromQueue(&memoryQueue, ID);
 		WaitForSingleObject(writeMutex, INFINITE);
@@ -149,7 +150,7 @@ DWORD WINAPI MyKill(LPVOID lpParam)
 		}
 		//释放申请的内存空间
 		//*****************
-		//MemoryRelease(ID);
+		memory_free(killID);
 		usedProcessID[killID] = 0;//将此进程标识符ID置为空闲
 		processCNT--;//进程总数减一
 		toBeKilled[killID] = 0;//当前ID号已经不在待删队列中

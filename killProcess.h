@@ -1,6 +1,7 @@
 #pragma once
 #include "ProStruct.h"
 #include "proQueue.h"
+#include "memory.h"
 
 
 void DestoryProcess(int ID);//自然销毁的进程

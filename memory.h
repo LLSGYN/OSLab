@@ -21,6 +21,7 @@ extern int try_to_write(int ID, int page);
 extern int do_no_page(mem_t* mem, int ID, int page);
 extern void mem_init();
 extern int memory_alloc(int ID, int page_required, int realloc);
+extern int memory_free(int ID);
 
 extern int blk_nr;
 extern int block_map[block_count];
