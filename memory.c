@@ -121,6 +121,7 @@ int try_to_write(int ID, int page)
 		int tdr = share_table[dr].dr_share;
 		while (tdr != -1) {
 			share_table[tdr].master = dr;
+			tdr = share_table[tdr].dr_share;
 		}
 	}
 
