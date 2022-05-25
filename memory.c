@@ -1,4 +1,12 @@
 #include "memory.h"
+#include <windows.h>
+#include <process.h>
+#include <stdbool.h>
+
+/*
+HANDLE writeMutex;
+FILE *logs = NULL;
+*/
 
 typedef struct FreeListNode {
 	unsigned int frame_id;
@@ -7,12 +15,13 @@ typedef struct FreeListNode {
 frnode* frhead;
 
 share_t share_table[MAX_PROCESS];
-int page_used[MAX_PROCESS];
+int mem_used, mem_shared;
+int swp_used;
 
 unsigned int num_pages;
 // the corresponding byte of each byte is used to mark the number of the page is currently referenced (occupied)
 unsigned char mem_map[NUM_PAGE];
-unsigned char dirty[NUM_PAGE];
+//unsigned char dirty[NUM_PAGE];
 
 int blk_nr;
 int block_map[block_count];
@@ -72,18 +81,26 @@ void do_new_copy(int ID)
 	// 把之前父进程所有的内存、外存的内容进行copy
 	for (int i = 0; i < share_table[ID].n_pages; ++i)
 	{
-		char buf[PAGE_SIZE];
-		if (page_table[fID][i].V) {
-			mmu_read_frame(page_table[fID][i].frame, buf);
+		if (page_table[fID][i].D) {
+			// 父进程写过这里的内容，那子进程也必须copy
+			page_table[ID][i].D = 1; // 标记dirty
+			char buf[PAGE_SIZE];
+			if (page_table[fID][i].V) {
+				mmu_read_frame(page_table[fID][i].frame, buf);
+				mem_shared--;
+			}
+			else {
+				disk_read(buf, fID, i);
+			}
+			if (page_table[ID][i].V) {
+				mmu_write_frame(page_table[ID][i].frame, buf);
+			}
+			else {
+				disk_write(buf, ID, i);
+			}
 		}
-		else {
-			disk_read(buf, fID, i);
-		}
-		if (page_table[ID][i].V) {
-			mmu_write_frame(page_table[ID][i].frame, buf);
-		}
-		else {
-			disk_write(buf, ID, i);
+		else if (page_table[fID][i].V) {
+			mem_shared--;
 		}
 	}
 }
@@ -109,7 +126,8 @@ int try_to_write(int ID, int page)
 			share_table[dr].father = share_table[ID].father;
 		}
 		share_table[ID].father = -1;
-		share_table[ID].master = -1;
+		//share_table[ID].master = -1;
+		flush_tlb(ID);
 	}
 	else if (dr != -1) {
 		// 别的正在依赖自己，复制新的
@@ -127,7 +145,7 @@ int try_to_write(int ID, int page)
 		}
 	}
 
-	dirty[page_table[ID][page].frame] = 1; // 写脏
+	page_table[ID][page].D = 1; // 写脏
 	return 0;
 }
 
@@ -153,7 +171,7 @@ int do_no_page(mem_t* mem, int ID, int page) {
 	page_table[ID][page].V = 1;
 	page_table[ID][page].frame = replaced_phys;
 
-	if (dirty[replaced_phys]) {
+	if (page_table[ID][replaced_page].D) {
 		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "swapping page %d of process %d out\n", replaced_page, ID);
 		ReleaseSemaphore(writeMutex, 1, NULL);
@@ -167,7 +185,12 @@ int do_no_page(mem_t* mem, int ID, int page) {
 	}
 	page_table[ID][replaced_page].V = 0;
 	page_table[ID][replaced_page].frame = 0;
-	swap_in(ID, page);
+	if (page_table[ID][page].D) {
+		swap_in(ID, page);
+	}
+	else {
+		free_block(ID, page);
+	}
 	page_reference(ID, page);
 }
 
@@ -189,6 +212,7 @@ int try_to_share(int ID, int fID) // pay attention!
 		page_table[ID][i] = page_table[fID][i];
 		if (page_table[ID][i].V) {
 			mem_map[page_table[ID][i].frame]++;
+			mem_shared++;
 		}
 		else if (page_table[ID][i].P) { // 这里可能会修改
 			page_to_block[ID][i] = page_to_block[fID][i];
@@ -241,15 +265,17 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 			mem_map[alloc]++;
 			page_table[ID][i].V = 1;
 			page_table[ID][i].P = 1;
-			//page_table[ID][i].RW = 0;
+			page_table[ID][i].D = 0;
+			mem_used++;
 			i++;
 		}
 		while (i < page_required)
 		{
 			page_table[ID][i].V = 0;
 			page_table[ID][i].P = 1;
-			//page_table[ID][i].RW = 0;
+			page_table[ID][i].D = 0;
 			create_block(ID, i); // 没有写入内存的，创建相应磁盘块
+			swp_used++;
 			i++;
 		}
 		resident_init(ID, min(MAX_RESIDENTS, page_required));
@@ -287,10 +313,12 @@ int memory_free(int ID) // release memory when process is terminated
 		{
 			if (page_table[fID][i].V) {
 				mem_map[page_table[fID][i].frame]--;
+				mem_shared--;
 			}
 			page_table[ID][i].frame = 0;
 			page_table[ID][i].P = 0;
 			page_table[ID][i].V = 0;
+			page_table[ID][i].D = 0;
 		}
 		if (dr != -1)
 			share_table[dr].father = fID;
@@ -305,16 +333,18 @@ int memory_free(int ID) // release memory when process is terminated
 			if (page_table[ID][i].V == 1) {
 				// 在内存里，释放这一个物理帧
 				int phys_frame = page_table[ID][i].frame;
+				mem_used--;
 				free_page(phys_frame);
-				dirty[phys_frame] = 0;
 			}
 			else if (page_table[ID][i].P) {
 				// 有效，删除外存上的
+				swp_used--;
 				free_block(ID, i);
 			}
 			page_table[ID][i].frame = 0;
 			page_table[ID][i].P = 0;
 			page_table[ID][i].V = 0;
+			page_table[ID][i].D = 0;
 		}
 		destroy_residents(ID); 
 	}
@@ -331,27 +361,63 @@ int memory_free(int ID) // release memory when process is terminated
 
 void command_free()
 {
-	printf("\ntotal used free shared");
+	printf("\n\ttotal\tused\tfree\tshared\n");
+	printf("Memory\t%d\t%d\t%d\t%d\t",
+		NUM_PAGE,
+		mem_used,
+		NUM_PAGE - mem_used,
+		mem_shared
+	);
+	printf("\nSwap:\t%d\t%d\t%d\n",
+		block_count,
+		swp_used,
+		block_count - swp_used
+	);
 }
 
 /*
- * TODO:
- * 子进程 ok
- * Free&free  
- * commit
- * clock对接
- * 脏页是设计页框还是页表？
-*/
-/*
 int main()
 {
+	writeMutex = CreateSemaphore(NULL, 1, 1, NULL);
+	logs = fopen("logs.txt", "w");
 	InitDisk();
 	ram_init();
 	mem_init();
-	allPCB[0].fatherProID = -1;
-	memory_alloc(0, 15, 0);
+	allPCB[0].fatherProID = -1; // 进程0没有父进程
+	allPCB[1].fatherProID = 0;  // 进程1父进程是0
+	memory_alloc(0, 16, 0); // 给进程0分配16页内存
+	flush_tlb(0); // 将TLB刷新到进程0
+	char test1[] = "test write to process 0";
+	char test2[] = "another test write to process 0";
+	char test3[] = "test write to process 1";
+	char rb[50];
+	write_memory(test1, 0, 1010, sizeof(test1)); // 在地址1010写入
+	write_memory(test2, 0, 2000, sizeof(test2)); // 在地址2000写入
+	command_free(); // 输出空闲
+	for (int i = 0; i < 16; ++i)
+		read_memory(rb, 0, (i << 10), 23); // 顺序全部读取，洗清驻留集内容
+	read_memory(rb, 0, 1010, sizeof(test1)); // 此时会触发缺页中断，重新读取
+	puts(rb); // 检查输出
+
+	flush_tlb(1);
+	memory_alloc(1, 16, 0); // 分配一个子进程
+	command_free(); // 输出空闲
+
+	read_memory(rb, 1, 1010, sizeof(test1)); // 读取同一位置，检查共享
+	puts(rb); // 检查输出
+
+	write_memory(test3, 1, 2000, sizeof(test3)); // 在地址2000写入
+	read_memory(rb, 1, 2000, sizeof(test3)); // 读取
+	puts(rb); // 检查输出
+	command_free();
+
 	flush_tlb(0);
-	char buf[3000];
-	write_memory(buf, 0, 11259, 2524);
+	read_memory(rb, 0, 2000, sizeof(test2)); // 读取
+	puts(rb); // 检查输出
+
+
+	memory_free(1);
+	memory_free(0);
+	command_free();
 	return 0;
 }*/

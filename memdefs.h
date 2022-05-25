@@ -11,9 +11,7 @@ typedef struct {
 	unsigned int frame : 12;
 	unsigned int P : 1; // presence bit: whether a page table entry can be used for translation
 	unsigned int V : 1; // valid bit
-	//unsigned int RW : 1; // is read only
-	//int shared : 5;
-	//unsigned int D : 1; // dirty bit
+	unsigned int D : 1; // dirty bit
 } pg_t;
 
 typedef unsigned char mem_t;
