@@ -120,7 +120,7 @@ void dbg_residents(int ID)
 int get_next_free_block() {
 	int i = (blk_nr + 1) % block_count;
 	++cnt;
-	printf("%d\n", cnt);
+	// printf("%d\n", cnt);
 	while (i != blk_nr) {
 		if (block_map[i] == -1) {
 			blk_nr = i;
@@ -128,16 +128,22 @@ int get_next_free_block() {
 		}
 		i = (i + 1) % block_count;
 	}
-	printf("No swap space availalbe!\n");
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "No swap space availalbe!\n");
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	return -1;
 }
 
 // 将进程ID的page页调入内存
 int swap_in(int ID, int page) {
-	printf("[swap-in]: pid=%d, page=%d\n", ID, page);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[swap-in]: pid=%d, page=%d\n", ID, page);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	int blk = page_to_block[ID][page];
 	if (blk == -1) {
-		printf("FATAL! target block does not exist!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "FATAL! target block does not exist!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		exit(-1);
 	}
 	char *buf = (char*)malloc(block_szie * sizeof(char));
@@ -152,7 +158,9 @@ int swap_in(int ID, int page) {
 
 // 将进程ID的page页写入磁盘
 int swap_out(int ID, int page) {
-	printf("[swap-out]: pid=%d, page=%d\n", ID, page);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[swap-out]: pid=%d, page=%d\n", ID, page);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	// 已经调入内存的块没有了对应的磁盘块，分配一个新的
 	int blk = create_block(ID, page);
 	if (blk == -1) {
@@ -172,7 +180,9 @@ int disk_read(char *buf, int ID, int page)
 {
 	int blk = page_to_block[ID][page];
 	if (blk == -1) {
-		printf("FATAL! target block does not exist!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "FATAL! target block does not exist!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		exit(-1);
 	}
 	readBlock(blk, buf);
@@ -183,7 +193,9 @@ int disk_write(char *buf, int ID, int page)
 {
 	int blk = page_to_block[ID][page];
 	if (blk == -1) {
-		printf("FATAL! cannot create new block\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "FATAL! cannot create new block\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		exit(-1);
 	}
 	writeBlock(blk, buf);
@@ -193,7 +205,9 @@ int disk_write(char *buf, int ID, int page)
 int create_block(int ID, int page) {
 	int blk = get_next_free_block();
 	if (blk == -1) {
-		printf("failed to swap out\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "failed to swap out\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	// 占用block，记录映射关系
@@ -203,10 +217,14 @@ int create_block(int ID, int page) {
 }
 
 int free_block(int ID, int page) {
-	printf("[free blk] pid=%d, page=%d\n", ID, page);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[free blk] pid=%d, page=%d\n", ID, page);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	int blk = page_to_block[ID][page];
 	if (blk == -1) {
-		printf("FATAL! target block does not exist!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "FATAL! target block does not exist!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		exit(-1);
 	}
 	block_map[blk] = -1;

@@ -92,7 +92,9 @@ void delete_node(int page) // check 1
 void register_ref(int page) // check 1
 {
 	if (!fb[page].valid) {
-		printf("Error! the page accessed is not valid!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "Error! the page accessed is not valid!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		exit(-1);
 	}
 	lru_node* tmp = _push_head(page);
@@ -103,12 +105,14 @@ void register_ref(int page) // check 1
 void dbg_tlb() // check 2
 {
 	lru_node* cur = head->next;
+	WaitForSingleObject(writeMutex, INFINITE);
 	while (cur)
 	{
-		printf("%d ", cur->key);
+		fprintf(logs, "%d ", cur->key);
 		cur = cur->next;
 	}
-	puts("");
+	ReleaseSemaphore(writeMutex, 1, NULL);
+	// puts("");
 }
 
 // 这个函数用于tlb查询失败时，尝试查询页表或调用缺页中断的
@@ -120,7 +124,9 @@ int walk_table(int page) // check 1
 		id = share_table[id].father;
 	}
 	if (!page_table[id][page].P) {
-		printf("%d\n", share_table[id].n_pages * 1024);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "%d\n", share_table[id].n_pages * 1024);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		fprintf(stderr, "trying to access invalid address\n");
 		return -1;
 	}
@@ -134,7 +140,9 @@ int walk_table(int page) // check 1
 			// return -2;
 		}
 		else { // 是出现在页表中的
-			printf("[walk tab] find (%d,%d) in page table\n", id, page);
+			WaitForSingleObject(writeMutex, INFINITE);
+			fprintf(logs, "[walk tab] find (%d,%d) in page table\n", id, page);
+			ReleaseSemaphore(writeMutex, 1, NULL);
 			page_reference(id, page);
 			return page_table[id][page].frame;
 		}
@@ -149,14 +157,17 @@ void tlb_invalidate(int page)
 	delete_node(page);
 	fb[page].valid = 0;
 	fb[page].cp = NULL;
-	printf("page %d is now set invalid\n", page);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "page %d is now set invalid\n", page);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 }
 
 int _TLB(int page) // check 1
 {
 	// printf("Trying to find the frame for page %d\n", page);
-	puts("----------------------------------------------");
-	printf("[TLB] Looking for phys frame of page %d, pid=%d\n", page, cpid);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[TLB] Looking for phys frame of page %d, pid=%d\n", page, cpid);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	if (fb[page].valid) { // a TLB hit
 		register_ref(page);
 		page_reference(cpid, page);
@@ -164,7 +175,9 @@ int _TLB(int page) // check 1
 	}
 	else { // a TLB miss
 		// printf("Oops, a TLB miss!\n");
-		printf("[TLB] TLB miss...\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "[TLB] TLB miss...\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		int target = walk_table(page);
 		if (target == -1)
 			return -1;
@@ -198,8 +211,10 @@ int read_memory(char* buf, int ID, addr_t addr, int len)
 	char* rb = buf;
 	addr_t from = addr, to = addr + len, wlen = 0;
 	if (to >= share_table[ID].n_pages * PAGE_SIZE) {
-		printf("memory out of boundary!\n");
-		printf("stop reading memory");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "memory out of boundary!\n");
+		fprintf(logs, "stop reading memory");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	while (from < to)
@@ -222,16 +237,19 @@ int read_memory(char* buf, int ID, addr_t addr, int len)
 
 int write_memory(char* wbuf, int ID, addr_t addr, int len) // check 1
 {
-	puts("----------------------------------------------");
 	if (addr >> 22) {
 		fprintf(stderr, "trying to access %d\n, out of maximum valid memory!\n", addr);
 		return -1;
 	}
 	addr_t from = addr, to = addr + len, wlen = 0;
-	printf("[write_mem] st=%d, ed=%d\n", from, to);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[write_mem] st=%d, ed=%d\n", from, to);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	if (to >= share_table[ID].n_pages * PAGE_SIZE) {
-		printf("memory out of boundary!\n");
-		printf("stop writing memory");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "memory out of boundary!\n");
+		fprintf(logs, "stop writing memory");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	while (from < to)

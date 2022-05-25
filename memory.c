@@ -91,7 +91,9 @@ void do_new_copy(int ID)
 int try_to_write(int ID, int page)
 {
 	if (page_table[ID][page].P == 0) {
-		printf("error! trying to write to an invalid frame!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "error! trying to write to an invalid frame!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	int fID = share_table[ID].father;
@@ -135,10 +137,14 @@ int try_to_write(int ID, int page)
 
 // handling page fault, load the target page into the process
 int do_no_page(mem_t* mem, int ID, int page) {
-	printf("[page fault] try find (%d,%d) in disk\n", ID, page);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[page fault] try find (%d,%d) in disk\n", ID, page);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	int replaced_page = demand_replaced(ID, page);
 	if (replaced_page < 0) {
-		printf("ERROR happened in do_no_page()!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "ERROR happened in do_no_page()!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	int replaced_phys = -1;
@@ -148,11 +154,15 @@ int do_no_page(mem_t* mem, int ID, int page) {
 	page_table[ID][page].frame = replaced_phys;
 
 	if (dirty[replaced_phys]) {
-		printf("swapping page %d of process %d out\n", replaced_page, ID);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "swapping page %d of process %d out\n", replaced_page, ID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		swap_out(ID, replaced_page);
 	}
 	else {
-		printf("page is clean, nothing to do!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "page is clean, nothing to do!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		create_block(ID, replaced_page);
 	}
 	page_table[ID][replaced_page].V = 0;
@@ -189,19 +199,24 @@ int try_to_share(int ID, int fID) // pay attention!
 // TODO: allocate memory, free memory
 int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share page
 {
-	printf("[mem-alloc] Trying to allocate %d pages to pid %d\n", page_required, ID);
 	if (ID >= MAX_PROCESS) {
-		printf("Invalid pid %d\n", ID);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "Invalid pid %d\n", ID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return -1;
 	}
 	if (page_required > NUM_PAGE) {
-		printf("Unable to allocate %d pages\n", page_required);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "Unable to allocate %d pages\n", page_required);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 	}
 	
 	int faID = allPCB[ID].fatherProID;
 	share_table[ID].n_pages = page_required;
 	if (faID >= 0 && !realloc) { 
-		printf("process %d created create a subprocess %d!\n", faID, ID);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "process %d created create a subprocess %d!\n", faID, ID);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		assert(ID != faID);
 		try_to_share(ID, faID);
 		// 对于fork的进程，应当共享一个resident set
@@ -222,7 +237,7 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 				break;
 			}
 			page_table[ID][i].frame = alloc;
-			printf("%d\n", alloc);
+			// printf("%d\n", alloc);
 			mem_map[alloc]++;
 			page_table[ID][i].V = 1;
 			page_table[ID][i].P = 1;
@@ -244,7 +259,9 @@ int memory_alloc(int ID, int page_required, int realloc) // TODO: fork, share pa
 void free_page(unsigned long addr)
 {
 	if (mem_map[addr]--) {
-		printf("[free-page] released frame %d\n", addr);
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "[free-page] released frame %d\n", addr);
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		frnode* cur = (frnode*)malloc(sizeof(frnode));
 		cur->frame_id = addr;
 		cur->next = frhead->next;
@@ -257,7 +274,9 @@ void free_page(unsigned long addr)
 
 int memory_free(int ID) // release memory when process is terminated
 {
-	printf("[free] Trying to free proc %d\n", ID);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "[free] Trying to free proc %d\n", ID);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	int fID = share_table[ID].father;
 	int dr = share_table[ID].dr_share;
 	dbg_residents(ID);
@@ -303,10 +322,11 @@ int memory_free(int ID) // release memory when process is terminated
 	share_table[ID].dr_share = -1;
 	share_table[ID].master = -1;
 	share_table[ID].n_pages = 0;
+	WaitForSingleObject(writeMutex, INFINITE);
 	for (int i = 0; i < 5; ++i) {
-		printf("id=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
+		fprintf(logs, "id=%d, fa=%d, dr=%d\n", i, share_table[i].father, share_table[i].dr_share);
 	}
-	puts("");
+	ReleaseSemaphore(writeMutex, 1, NULL);
 }
 
 void command_free()

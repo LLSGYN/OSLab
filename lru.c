@@ -130,11 +130,15 @@ int LRU_demand(int ID, int page)
 void LRU_destroy(int ID)
 {
 	if (share_table[ID].father != -1) {
-		printf("ERROR! cannot destroy the resident set of parent process!\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "ERROR! cannot destroy the resident set of parent process!\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return;
 	}
 	if (head[ID] == NULL) {
-		puts("???");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "???\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 	}
 	lruptr phead = head[ID], cur = phead->next;
 	while (cur) {
@@ -154,20 +158,26 @@ void dbg_LRU(int ID)
 	{
 		ID = share_table[ID].father;
 	}
-	printf("------DEBUG PROCESS %d------\n", ID);
-	printf("resident set info: %d\n", resident_size[ID]);
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "------DEBUG PROCESS %d------\n", ID);
+	fprintf(logs, "resident set info: %d\n", resident_size[ID]);
+	ReleaseSemaphore(writeMutex, 1, NULL);
 	if (resident_size[ID] == 0) {
-		printf("\n\n");
+		WaitForSingleObject(writeMutex, INFINITE);
+		fprintf(logs, "\n\n");
+		ReleaseSemaphore(writeMutex, 1, NULL);
 		return;
 	}
 	lruptr cur = head[ID]->next;
 	// printf("head=%d, tail=%d\n", head[ID]->next->page_info.page, tail[ID]->page_id);
-	printf("context:\n");
+	WaitForSingleObject(writeMutex, INFINITE);
+	fprintf(logs, "context:\n");
 	while (cur) {
-		printf("<%d> ", cur->page_id);
+		fprintf(logs, "<%d> ", cur->page_id);
 		cur = cur->next;
 	}
-	printf("\n--------------------------\n\n");
+	fprintf(logs, "\n--------------------------\n\n");
+	ReleaseSemaphore(writeMutex, 1, NULL);
 }
 
 // return the number of frames in memory

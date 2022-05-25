@@ -113,6 +113,8 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 		fprintf(logs, "  needs time: %d\n", allPCB[nowID].events[i].time);
 	}
 	ReleaseSemaphore(writeMutex, 1, NULL);
+	if (fatherProcessID == -1)
+		printf("Create process %s successfully\n", processName);
 
 	allPCB[nowID].CPUtime = 0;
 	allPCB[nowID].startTime = time(NULL); //记录进程创建时间
