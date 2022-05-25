@@ -27,13 +27,13 @@ DWORD WINAPI virtualIO(LPVOID paramter)
 			if (allPCB[pid].eventTime == allPCB[pid].events[curEID].time) // 当前事件执行完毕
 			{
 				ReleaseSemaphore(proInIOMutex[ID], 1, NULL); // 释放IO设备运行权限信号量，在UpdateEvent之前释放，防止发生死锁
+				WaitForSingleObject(writeMutex, INFINITE);
+				fprintf(logs, "----pro %d get IO %d.\n", pid, ID);
+				ReleaseSemaphore(writeMutex, 1, NULL);
 				// WaitForSingleObject(killMutex, INFINITE); // 保证更新事件信息的时候该进程不可以被强制销毁
 				UpdateEvent(pid); // 更新此进程的事件信息
 				allPCB[pid].IOID = -1; // IO设备使用完毕
 				// ReleaseSemaphore(killMutex, 1, NULL); // 释放killMutex
-				WaitForSingleObject(writeMutex, INFINITE);
-				fprintf(logs, "----IO %d get time successfully.\n", ID);
-				ReleaseSemaphore(writeMutex, 1, NULL);
 				ReleaseSemaphore(allPCB[pid].processMutex, 1, NULL); // 释放进程管理权限
 				ReleaseSemaphore(breakIO[ID], 1, NULL); // 等待IO设备进行调度管理
 				WaitForSingleObject(contIO[ID], INFINITE); // IO设备完成调度管理

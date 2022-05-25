@@ -30,8 +30,8 @@ void KillProFromQueue(WaitQueue* curQueue, int ID)//²ÎÊı£º¸Ã½ø³ÌËùÔÚµÄ¾ÍĞ÷¶ÓÁĞ ¸
 		WaitForSingleObject(curQueue->queueFull[priority_num], 0);//¶ÓÁĞÖĞ½ø³ÌÊı¼õÒ»
 		WaitForSingleObject(curQueue->totalCnt, 0);//¶ÓÁĞÖĞ½ø³Ì×ÜÊı¼õÒ»
 
-		ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
 	}
+	ReleaseSemaphore(curQueue->queueMutex[priority_num], 1, NULL);//ĞŞ¸ÄÍê±Ï£¬ÊÍ·Å¸Ã»¥³âÁ¿
 	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "-----Remove process %d successfully.\n", ID);//debugĞÅÏ¢£¬ÔİÊ±ÔÚÆÁÄ»ÉÏ´òÓ¡£¬ºóĞøÊäµ½logÎÄ¼şÖĞ
 	ReleaseSemaphore(writeMutex, 1, NULL);
@@ -69,20 +69,20 @@ void UpdateEvent(int proID)
 	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "-----Process %d, job %d finish\n", proID, allPCB[proID].eventID);//debugĞÅÏ¢
 	ReleaseSemaphore(writeMutex, 1, NULL);
-	if (allPCB[proID].eventID < allPCB[proID].eventNum - 1)//½ø³Ì»¹ÓĞÊÂ¼şÃ»Ö´ĞĞ
-	{
-		int preEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//¸ÕÖ´ĞĞ½áÊøµÄÊÂ¼şÀàĞÍ
-		allPCB[proID].eventID++;//ÂíÉÏÒªÖ´ĞĞµÄÊÂ¼şID
-		int curEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//ÂíÉÏĞèÒªÖ´ĞĞµÄÊÂ¼şÀàĞÍ
-		allPCB[proID].eventID--;//ÔİÊ±ÍË»Øµ½¸Õ½áÊøµÄÊÂ¼şID£¬Ä¿µÄÊÇ²»Ó°ÏìºóĞø´úÂëµÄÖ´ĞĞ
-		if (preEtype == curEtype)//ÈôÁ½ÕßÏàÍ¬£¬Ôò²»ÓÃ´ÓÔ­¶ÓÁĞÉ¾³ı
-		{
-			allPCB[proID].eventID++;//ÊÂ¼şIDºÅ¸üĞÂ
-			allPCB[proID].eventTime = 0;//µ±Ç°ÊÂ¼şÔËĞĞµÄÊ±¼äÎª0
-			allPCB[proID].nowState = wait;//µÈ´ıCPUÖØĞÂµ÷¶È
-			return;//¸üĞÂ½ø³ÌÊÂ¼ş½áÊø
-		}
-	}
+	// if (allPCB[proID].eventID < allPCB[proID].eventNum - 1)//½ø³Ì»¹ÓĞÊÂ¼şÃ»Ö´ĞĞ
+	// {
+	// 	int preEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//¸ÕÖ´ĞĞ½áÊøµÄÊÂ¼şÀàĞÍ
+	// 	allPCB[proID].eventID++;//ÂíÉÏÒªÖ´ĞĞµÄÊÂ¼şID
+	// 	int curEtype = allPCB[proID].events[allPCB[proID].eventID].eventType;//ÂíÉÏĞèÒªÖ´ĞĞµÄÊÂ¼şÀàĞÍ
+	// 	allPCB[proID].eventID--;//ÔİÊ±ÍË»Øµ½¸Õ½áÊøµÄÊÂ¼şID£¬Ä¿µÄÊÇ²»Ó°ÏìºóĞø´úÂëµÄÖ´ĞĞ
+	// 	if (preEtype == curEtype)//ÈôÁ½ÕßÏàÍ¬£¬Ôò²»ÓÃ´ÓÔ­¶ÓÁĞÉ¾³ı
+	// 	{
+	// 		allPCB[proID].eventID++;//ÊÂ¼şIDºÅ¸üĞÂ
+	// 		allPCB[proID].eventTime = 0;//µ±Ç°ÊÂ¼şÔËĞĞµÄÊ±¼äÎª0
+	// 		allPCB[proID].nowState = wait;//µÈ´ıCPUÖØĞÂµ÷¶È
+	// 		return;//¸üĞÂ½ø³ÌÊÂ¼ş½áÊø
+	// 	}
+	// }
 	//´ÓÔ­¶ÓÁĞÖĞÉ¾³ı´Ë½ø³Ì
 	if (allPCB[proID].events[allPCB[proID].eventID].eventType == occupyIO)//ºÍIO¶ÓÁĞÏà¹Ø
 	{
