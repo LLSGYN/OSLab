@@ -129,8 +129,8 @@ int LRU_demand(int ID, int page)
 
 void LRU_destroy(int ID)
 {
-	if (allPCB[ID].fatherProID != -1) {
-		printf("ERROR! cannot destroy the resident set of parent process!");
+	if (share_table[ID].father != -1) {
+		printf("ERROR! cannot destroy the resident set of parent process!\n");
 		return;
 	}
 	if (head[ID] == NULL) {
