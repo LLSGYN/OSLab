@@ -164,10 +164,10 @@ int do_no_page(mem_t* mem, int ID, int page) {
 int try_to_share(int ID, int fID) // pay attention!
 {
 	int lst = fID;
-	while (share_table[lst].dr_share != -1)
-	{
-		lst = share_table[lst].dr_share;
-	}
+	// while (share_table[lst].dr_share != -1)
+	// {
+	// 	lst = share_table[lst].dr_share;
+	// }
 	share_table[ID].father = lst;
 	share_table[ID].master = fID;
 	share_table[lst].dr_share = ID;

@@ -20,6 +20,7 @@ share_t share_table[MAX_PROCESS];
 extern int try_to_write(int ID, int page);
 extern int do_no_page(mem_t* mem, int ID, int page);
 extern void mem_init();
+extern void command_free();
 extern int memory_alloc(int ID, int page_required, int realloc);
 extern int memory_free(int ID);
 
