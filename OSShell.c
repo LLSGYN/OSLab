@@ -212,7 +212,7 @@ void shell()
 		}
 		else if (!strcmp(cmd, "free"))
 		{
-			// pass
+			command_free();
 		}
 		else
 		{

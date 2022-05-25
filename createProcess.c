@@ -50,8 +50,11 @@ int CreateMyProcess(char* processName, int fatherProcessID)//创建用户进程
 	allPCB[nowID].eventID = 0;
 	allPCB[nowID].eventTime = 0;
 
-	allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//随机生成申请的内存页数 最小为3
 	//调用接口函数向内存模块申请内存
+	if (fatherProcessID == -1)
+		allPCB[nowID].pageNum = rand() % (MAX_PAGE_NUM - 2) + 3;//随机生成申请的内存页数 最小为3
+	else
+		allPCB[nowID].pageNum = allPCB[fatherProcessID].pageNum;
 	memory_alloc(nowID, allPCB[nowID].pageNum, 0);
 	WaitForSingleObject(writeMutex, INFINITE);
 	fprintf(logs, "----the priority of process is %d\n", allPCB[nowID].priority);
