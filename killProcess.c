@@ -1,5 +1,6 @@
 #include "killProcess.h"
 #include "dfVar.h"
+#include "fsapi.h"
 
 void DestoryProcess(int ID)//自然销毁的进程ID
 {
@@ -157,6 +158,7 @@ DWORD WINAPI MyKill(LPVOID lpParam)
 		WaitForSingleObject(writeMutex, INFINITE);
 		fprintf(logs, "\nINFO:process %d is killed!\n", killID);//debug信息
 		ReleaseSemaphore(writeMutex, 1, NULL);
-		// printf("$root:");
+		printf("\nINFO:process %d is killed!\n", killID);//debug信息
+		printf("root@OS-LAB:%s# ", printwd());
 	}
 }
