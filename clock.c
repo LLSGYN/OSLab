@@ -1,45 +1,45 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "clock.h"
-#include "memdefs.h"
 
 
 
-pageptr CLKFrameMap[MAX_PROCESS][NUM_PAGE]; //æŒ‰ç…§é¡µé¢ä»0åˆ°æœ€å¤§çš„ä¿¡æ¯å­˜å‚¨
-pagevector eachCLKSetPerProcess[MAX_PROCESS];//è®°å½•ä¸€ä¸ªè¿›ç¨‹çš„ä¿¡æ¯
+pageptr CLKFrameMap[MAX_PROCESS][NUM_PAGE]; //°´ÕÕÒ³Ãæ´Ó0µ½×î´óµÄĞÅÏ¢´æ´¢
+pagevector eachCLKSetPerProcess[MAX_PROCESS];
+int resident_size[MAX_PROCESS];
 
 
-
-void CreateCLKSet(int processid, int setsize) //å°†æŸä¸€è¿›ç¨‹çš„é©»ç•™é›†åˆå§‹åŒ–
+void CreateCLKSet(int processid, int setsize) //½«Ä³Ò»½ø³ÌµÄ×¤Áô¼¯³õÊ¼»¯
 {
+    resident_size[processid] = setsize;
     for (int i = 0; i < setsize; i++)
     {
         eachCLKSetPerProcess[processid].frameVector[i].used = 0;
-        eachCLKSetPerProcess[processid].frameVector[i].pageid = i;                   //å¯¹åº”çš„æ˜¯è¿›ç¨‹çš„ç¬¬å‡ é¡µ
-        CLKFrameMap[processid][i] = &eachCLKSetPerProcess[processid].frameVector[i]; //åˆå§‹åŒ–é¡µæ¡†è¡¨
+        eachCLKSetPerProcess[processid].frameVector[i].pageid = i;                   //¶ÔÓ¦µÄÊÇ½ø³ÌµÄµÚ¼¸Ò³
+        CLKFrameMap[processid][i] = &eachCLKSetPerProcess[processid].frameVector[i]; //³õÊ¼»¯Ò³¿ò±í
     }
     eachCLKSetPerProcess[processid].maxSet = setsize;
-    eachCLKSetPerProcess[processid].pointer = 0; //åˆå§‹çš„ä½ç½®æŒ‡é’ˆä¸º0
+    eachCLKSetPerProcess[processid].pointer = 0; //³õÊ¼µÄÎ»ÖÃÖ¸ÕëÎª0
 }
 
-void ChangeUsedBit(int processid, int pageid) //å°†è¿‘æœŸä½¿ç”¨è¿‡çš„ç‰¹å®šé¡µé¢ä½¿ç”¨ä½ç½®ä¸ºä¸€
+void ChangeUsedBit(int processid, int pageid) //½«½üÆÚÊ¹ÓÃ¹ıµÄÌØ¶¨Ò³ÃæÊ¹ÓÃÎ»ÖÃÎªÒ»
 {
-    pageptr targetpage = CLKFrameMap[processid][pageid]; //åœ¨é¡µæ¡†è¡¨ä¸­è·å¾—è¯¥é¡µçš„åœ°å€
-    if (targetpage == NULL)                              //è¯¥é¡µé¢å¹¶æœªåœ¨é¡µæ¡†ä¸­
+    pageptr targetpage = CLKFrameMap[processid][pageid]; //ÔÚÒ³¿ò±íÖĞ»ñµÃ¸ÃÒ³µÄµØÖ·
+    if (targetpage == NULL)                              //¸ÃÒ³Ãæ²¢Î´ÔÚÒ³¿òÖĞ
         return;
-    targetpage->used = 1; //ä½¿ç”¨ä½ç½®ä¸º1
+    targetpage->used = 1; //Ê¹ÓÃÎ»ÖÃÎª1
 }
 
-int ReplacePage(int processid, int pageid)//é¡µé¢æ›¿æ¢
+int ReplacePage(int processid, int pageid)//Ò³ÃæÌæ»»
 {
-    int curid, replaceid; //å½“å‰æŒ‡å‘çš„id,è¦è¢«æ›¿æ¢çš„id
+    int curid, replaceid; //µ±Ç°Ö¸ÏòµÄid,Òª±»Ìæ»»µÄid
     while (1)
     {
         eachCLKSetPerProcess[processid].pointer %= eachCLKSetPerProcess[processid].maxSet;
-        curid = eachCLKSetPerProcess[processid].pointer++;            //å½“å‰æŒ‡é’ˆçš„ä¸‹ä¸€ä¸ªä½ç½®
-        if (eachCLKSetPerProcess[processid].frameVector[curid].used == 1) //æŒ‡é’ˆæŒ‡å‘çš„ä½¿ç”¨ä½ä¸º1
+        curid = eachCLKSetPerProcess[processid].pointer++;            //µ±Ç°Ö¸ÕëµÄÏÂÒ»¸öÎ»ÖÃ
+        if (eachCLKSetPerProcess[processid].frameVector[curid].used == 1) //Ö¸ÕëÖ¸ÏòµÄÊ¹ÓÃÎ»Îª1
         {
-            eachCLKSetPerProcess[processid].frameVector[curid].used = 0; //è®¤ä¸ºæœ€è¿‘æœªä½¿ç”¨è¿‡
+            eachCLKSetPerProcess[processid].frameVector[curid].used = 0; //ÈÏÎª×î½üÎ´Ê¹ÓÃ¹ı
         }
         else
         {
@@ -47,50 +47,63 @@ int ReplacePage(int processid, int pageid)//é¡µé¢æ›¿æ¢
             eachCLKSetPerProcess[processid].frameVector[curid].used = 1;
             eachCLKSetPerProcess[processid].frameVector[curid].pageid = pageid;
             CLKFrameMap[processid][pageid] = &eachCLKSetPerProcess[processid].frameVector[curid];
-            //å°†æ¢ä¸Šçš„é¡µé¢å†™å…¥é¡µè¡¨
-            CLKFrameMap[processid][replaceid] = NULL; //ä»é¡µæ¡†æ›¿æ¢ä¸‹æ¥çš„ç½®ä¸ºç©º
+            //½«»»ÉÏµÄÒ³ÃæĞ´ÈëÒ³±í
+            CLKFrameMap[processid][replaceid] = NULL; //´ÓÒ³¿òÌæ»»ÏÂÀ´µÄÖÃÎª¿Õ
             return replaceid;
         }
     }
-    
+
 }
 
 int ResetResidentSet(int processid)
-//æ¸…é™¤ä¸€ä¸ªè¿›ç¨‹çš„å†…å­˜ä½¿ç”¨ä¿¡æ¯
+//Çå³ıÒ»¸ö½ø³ÌµÄÄÚ´æÊ¹ÓÃĞÅÏ¢
 {
+    if (share_table[processid].father != -1) {
+        printf("ERROR! cannot destroy the resident set of parent process!");
+        return;
+    }
     int i = 0;
-    //è·å–å½“å‰åˆ†é…ç»™è¯¥é¡µçš„é¡µæ¡†æ•°é‡
+    //»ñÈ¡µ±Ç°·ÖÅä¸ø¸ÃÒ³µÄÒ³¿òÊıÁ¿
     int curSetSize = eachCLKSetPerProcess[processid].maxSet;
-    for (i = 0; i < curSetSize; i++) //åˆå§‹åŒ–æ‰€æœ‰é¡µæ¡†
+    for (i = 0; i < curSetSize; i++) //³õÊ¼»¯ËùÓĞÒ³¿ò
     {
         eachCLKSetPerProcess[processid].frameVector[i].used = 0;
         eachCLKSetPerProcess[processid].frameVector[i].pageid = -1;
     }
-    for (i = 0; i < NUM_PAGE; i++) //å°†è¯¥è¿›ç¨‹çš„é¡µæ¡†è¡¨åˆå§‹åŒ–
+    for (i = 0; i < NUM_PAGE; i++) //½«¸Ã½ø³ÌµÄÒ³¿ò±í³õÊ¼»¯
     {
         CLKFrameMap[processid][i] = NULL;
     }
     return 1;
 }
 
-void OutputCLKFrame(int processid) //è¾“å‡ºå½“å‰é©»ç•™é›†å†…å®¹
+void OutputCLKFrame(int processid) //Êä³öµ±Ç°×¤Áô¼¯ÄÚÈİ
 {
-    int i = eachCLKSetPerProcess[processid].pointer; //è·å–å½“å‰å·¥ä½œæŒ‡é’ˆä½ç½®
+    int i = eachCLKSetPerProcess[processid].pointer; //»ñÈ¡µ±Ç°¹¤×÷Ö¸ÕëÎ»ÖÃ
+    printf("resident set of process <%d>:%d\n", processid, resident_size[processid]);
+    if (resident_size[processid] == 0) {
+        printf("\n\n");
+        return;
+    }
     int finalPointer = (i + eachCLKSetPerProcess[processid].maxSet - 1) % eachCLKSetPerProcess[processid].maxSet;
-    //å·¥ä½œæŒ‡é’ˆå‰ä¸€ä½
-    printf("resident set of process <%d>:\n", processid);
-
+    //else printf("slfjsfjao");
+    //¹¤×÷Ö¸ÕëÇ°Ò»Î»
+    
     for (; i != finalPointer; i = (i + 1) % eachCLKSetPerProcess[processid].maxSet)
     {
         printf("PageID: %d, used: %d\n",
-               eachCLKSetPerProcess[processid].frameVector[i].pageid,
-               eachCLKSetPerProcess[processid].frameVector[i].used);
+            eachCLKSetPerProcess[processid].frameVector[i].pageid,
+            eachCLKSetPerProcess[processid].frameVector[i].used);
     }
     printf("PageID: %d, used: %d\n",
-           eachCLKSetPerProcess[processid].frameVector[i].pageid,
-           eachCLKSetPerProcess[processid].frameVector[i].used);
+        eachCLKSetPerProcess[processid].frameVector[i].pageid,
+        eachCLKSetPerProcess[processid].frameVector[i].used);
 }
 
+int CLK_get_frame_num(int processid)
+{
+    return resident_size[processid];
+}
 // int main()
 // {
 //     int processid=1,size;
@@ -100,12 +113,33 @@ void OutputCLKFrame(int processid) //è¾“å‡ºå½“å‰é©»ç•™é›†å†…å®¹
 //     scanf("%d",&size);
 //     CreateCLKSet(processid,size);
 //     OutputCLKFrame(processid);
-    
-//     ChangeUsedBit(processid,d);
-//     OutputCLKFrame(processid);
-       
-//     ReplacePage(processid,d);
-//     OutputCLKFrame(processid);
-       
+//     while(c!='q')
+//     {
+//         printf("choose your mode:changeuse/replace/changeall");
+//         scanf("%s",&c);
+//         if(c=='u')
+//         {
+//             printf("use which page");
+//             scanf("%d",&d);
+//             ChangeUsedBit(processid,d);
+//             OutputCLKFrame(processid);
+//         }
+//         else if(c=='r')
+//         {
+//             printf("replace which page(from 0 to %d)",NUM_PAGE-1);
+//             scanf("%d",&d);
+//             ReplacePage(processid,d);
+//             OutputCLKFrame(processid);
+//         }
+//         else if(c=='a')
+//         {
+//             for(int i=0;i<NUM_PAGE;i++)
+//             {
+//                 ChangeUsedBit(processid,i);
+//             }
+//             OutputCLKFrame(processid);
+//         }
+//     }
+
 //     return 0;
 // }

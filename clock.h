@@ -1,23 +1,26 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include "memory.h"
+#include "memdefs.h"
 
-// #define MAX_PROCESS 16
-// #define NUM_PAGE 4096
 
-typedef struct PageNode //é¡µé¢ä¿¡æ¯èŠ‚ç‚¹
+
+typedef struct PageNode //Ò³ÃæĞÅÏ¢½Úµã
 {
-    int pageid; //é¡µé¢id
-    int used;   //ä½¿ç”¨ä½ 0  æ ‡è®°æ˜¯å¦ä½¿ç”¨è¿‡è¯¥é¡µ
-} pagenode, *pageptr;
+    int pageid; //Ò³Ãæid
+    int used;   //Ê¹ÓÃÎ» 0  ±ê¼ÇÊÇ·ñÊ¹ÓÃ¹ı¸ÃÒ³
+} pagenode, * pageptr;
 
 typedef struct PageNodeVector
 {
-    int pointer;                        //å½“å‰æŒ‡é’ˆæŒ‡å‘æ•°ç»„çš„ä½ç½®
-    int maxSet;                         //å½“å‰æ­¤é©»ç•™é›†çš„é¡µé¢æ•°
-    pagenode frameVector[NUM_PAGE]; //å½“å‰è¿›ç¨‹å¯æ‹¥æœ‰çš„æœ€å¤§é¡µé¢æ•°
-} pagevector, *pagevectorptr;
+    int pointer;                        //µ±Ç°Ö¸ÕëÖ¸ÏòÊı×éµÄÎ»ÖÃ
+    int maxSet;                         //µ±Ç°´Ë×¤Áô¼¯µÄÒ³ÃæÊı
+    pagenode frameVector[NUM_PAGE]; //µ±Ç°½ø³Ì¿ÉÓµÓĞµÄ×î´óÒ³ÃæÊı
+} pagevector, * pagevectorptr;
 
-void CreateCLKSet(int processid, int setsize); //å°†æŸä¸€è¿›ç¨‹çš„é©»ç•™é›†åˆå§‹åŒ–
-void ChangeUsedBit(int processid, int pageid); //å°†è¿‘æœŸä½¿ç”¨è¿‡çš„ç‰¹å®šé¡µé¢ä½¿ç”¨ä½ç½®ä¸ºä¸€
-int ReplacePage(int processid, int pageid);//é¡µé¢æ›¿æ¢
-int ResetResidentSet(int processid);//æ¸…é™¤ä¸€ä¸ªè¿›ç¨‹çš„å†…å­˜ä½¿ç”¨ä¿¡æ¯
-void OutputCLKFrame(int processid); //è¾“å‡ºå½“å‰é©»ç•™é›†å†…å®¹
+void CreateCLKSet(int processid, int setsize); //½«Ä³Ò»½ø³ÌµÄ×¤Áô¼¯³õÊ¼»¯
+void ChangeUsedBit(int processid, int pageid); //½«½üÆÚÊ¹ÓÃ¹ıµÄÌØ¶¨Ò³ÃæÊ¹ÓÃÎ»ÖÃÎªÒ»
+int ReplacePage(int processid, int pageid);//Ò³ÃæÌæ»»
+int ResetResidentSet(int processid);//Çå³ıÒ»¸ö½ø³ÌµÄÄÚ´æÊ¹ÓÃĞÅÏ¢
+void OutputCLKFrame(int processid); //Êä³öµ±Ç°×¤Áô¼¯ÄÚÈİ
+int CLK_get_frame_num(int processid);//Êä³ö×¤Áô¼¯ÖĞÒ³ÃæÊı

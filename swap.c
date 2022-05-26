@@ -1,5 +1,7 @@
 ﻿#include "lru.h"
 #include "swap.h"
+#include "clock.h"
+#include "clockpro.h"
 
 #include <stdio.h>
 
@@ -13,7 +15,7 @@ int cnt = 0;
 
 void set_replace_algo(int x)
 {
-	if (x == 0 || x == 1)
+	if (x == 0 || x == 1 || x == 2)
 		op = x;
 	else
 		fprintf(stderr, "invalid option!!\n");
@@ -26,8 +28,11 @@ int resident_init(int ID, int set_size)
 	case 0:
 		return LRU_init(ID, set_size);
 		break;
+	case 1:
+		CreateCLKSet(ID, set_size);
+		break;
 	default:
-		// return CLOCK_init(ID, set_size);
+		CreateCLKSetpro(ID, set_size);
 		break;
 	}
 }
@@ -39,8 +44,11 @@ int page_reference(int ID, int page)
 	case 0:
 		return LRU_refer(ID, page);
 		break;
+	case 1:
+		ChangeUsedBit(ID, page);
+		break;
 	default:
-		// return CLOCK_refer(ID, page);
+		ChangeUsedBitpro(ID, page);
 		break;
 	}
 }
@@ -52,8 +60,11 @@ int demand_replaced(int ID, int page)
 	case 0:
 		return LRU_demand(ID, page);
 		break;
+	case 1:
+		return ReplacePage(ID, page);
+		break;
 	default:
-		// return CLOCK_demand(ID, page);
+		return ReplacePagepro(ID, page);
 		break;
 	}
 }
@@ -65,9 +76,12 @@ int get_frame_num(int ID)
 	case 0:
 		return LRU_get_frame_num(ID);
 		break;
-	
+
+	case 1:
+		return CLK_get_frame_num(ID);
+		break;
 	default:
-		// return CLOCK_get_frame_num(ID);
+		return CLK_get_frame_num_pro(ID);
 		break;
 	}
 }
@@ -79,9 +93,12 @@ int destroy_residents(int ID)
 	case 0:
 		LRU_destroy(ID);
 		break;
-	
+
+	case 1:
+		return ResetResidentSet(ID);
+		break;
 	default:
-		// return CLOCK_get_frame_num(ID);
+		return ResetResidentSetpro(ID);
 		break;
 	}
 }
@@ -93,28 +110,15 @@ void dbg_residents(int ID)
 	case 0:
 		dbg_LRU(ID);
 		break;
-	
+
+	case 1:
+		OutputCLKFrame(ID);
+		break;
 	default:
+		OutputCLKFramepro(ID);
 		break;
 	}
 }
-// int add_frame(int ID, int page)
-// {
-// 	switch (op)
-// 	{
-// 	case 0:
-// 		return LRU_add(ID, page);
-// 		break;
-// 	default:
-// 		return CLOCK_add(ID, page);
-// 		break;
-// 	}
-// }
-
-/*
-我现在需要实现：
-一个内存页-磁盘块的双向映射关系
-*/
 
 // 查询下一个空闲磁盘块
 int get_next_free_block() {

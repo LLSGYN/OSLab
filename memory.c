@@ -383,6 +383,7 @@ int main()
 	InitDisk();
 	ram_init();
 	mem_init();
+	set_replace_algo(0);
 	allPCB[0].fatherProID = -1; // 进程0没有父进程
 	allPCB[1].fatherProID = 0;  // 进程1父进程是0
 	memory_alloc(0, 16, 0); // 给进程0分配16页内存
