@@ -126,6 +126,7 @@ int try_to_write(int ID, int page)
 			share_table[dr].father = share_table[ID].father;
 		}
 		share_table[ID].father = -1;
+		share_table[fID].dr_share = dr;
 		//share_table[ID].master = -1;
 		flush_tlb(ID);
 	}
