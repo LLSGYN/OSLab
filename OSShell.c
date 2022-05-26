@@ -46,6 +46,7 @@ void shell()
 		{
 			printf("All commands:\n");
 			printf("Commands about file operation:\n");
+			printf("cat	[FILE]				Show the content of the FILE\n");
 			printf("cd [DIRECTORY]				Change the shell working directory.\n");
 			printf("ln [OLD NAME] [NEW NAME]		Linke the file or directory name with NEW NAME.\n");
 			printf("ls					List  information  about the FILEs (the current directory by default).\n");
@@ -56,6 +57,7 @@ void shell()
 			printf("rmdir [DIRECTORY]			Remove the DIRECTORY and files in it, if they exist.\n");
 			printf("rmln [NAME]				Remove the the link between two NAME.\n");
 			printf("touch [FILE] [SIZE]			A FILE argument that does not exist is created with SIZE.\n");
+			printf("write [FILE] [CONTENTE]			Write the CONTENT into the FIEL\n");
 			printf("Commands about process operation:\n");
 			printf("create [process]			Create a process named by user with random events.\n");
 			printf("kill [pid]				Send the processes identified by PID a signal to terminate it\n");
@@ -95,7 +97,7 @@ void shell()
 			int i = substr(options, 0, oldName);
 			if (i == -1)
 			{
-				printf("Error: touch needs two parameters.\n");
+				printf("Error: mv needs two parameters.\n");
 				continue;
 			}
 			substr(options, i, newName);

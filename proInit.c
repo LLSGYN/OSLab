@@ -80,8 +80,20 @@ void Init()
 {
 	printf("virOS starts...\n");
 	printf("input CPU Mode:\n");
-	scanf("%d", &CPUMode);//初始化CPU调度方式
-	getchar();
+	char mode[512];
+	gets(mode);
+	if (mode[0] <= '2' && mode[0] >= '0')
+		CPUMode = mode[0] - '0';
+	else
+		CPUMode = 0;
+	printf("input replace algorithm:\n");
+	gets(mode);
+	if (mode[0] <= '1' && mode[0] >= '0')
+		set_replace_algo(mode[0] - '0');
+	else
+		set_replace_algo(0);
+	// scanf("%d", &CPUMode);//初始化CPU调度方式
+	// getchar();
 	InitPCB();
 	InitQueue();
 	InitSemaphore();

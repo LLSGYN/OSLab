@@ -4,7 +4,7 @@
 #include "memdefs.h"
 #include "memory.h"
 
-void set_replace_algo(int x);
+extern void set_replace_algo(int x);
 void dbg_residents(int ID);
 
 int resident_init(int ID, int set_size);
