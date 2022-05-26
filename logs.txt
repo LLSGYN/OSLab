@@ -80,16 +80,16 @@ page is clean, nothing to do!
 page is clean, nothing to do!
 [swap-in]: pid=0, page=1
 process 0 created create a subprocess 1!
+[write_mem] st=2000, ed=2024
+[TLB] Looking for phys frame of page 1, pid=0
 [TLB] Looking for phys frame of page 0, pid=1
 [TLB] TLB miss...
-[walk tab] find (0,0) in page table
-[TLB] Looking for phys frame of page 1, pid=1
-[TLB] TLB miss...
-[walk tab] find (0,1) in page table
-[write_mem] st=2000, ed=2024
+[walk tab] find (1,0) in page table
 [TLB] Looking for phys frame of page 1, pid=1
 [TLB] TLB miss...
 [walk tab] find (1,1) in page table
+[write_mem] st=2000, ed=2024
+[TLB] Looking for phys frame of page 1, pid=1
 [TLB] Looking for phys frame of page 1, pid=1
 [TLB] Looking for phys frame of page 1, pid=0
 [TLB] TLB miss...
@@ -117,7 +117,7 @@ context:
 [free blk] pid=1, page=13
 [free blk] pid=1, page=14
 [free blk] pid=1, page=15
-id=0, fa=-1, dr=1
+id=0, fa=-1, dr=-1
 id=1, fa=-1, dr=-1
 id=2, fa=-1, dr=-1
 id=3, fa=-1, dr=-1

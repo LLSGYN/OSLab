@@ -313,13 +313,14 @@ int memory_free(int ID) // release memory when process is terminated
 		{
 			if (page_table[fID][i].V) {
 				mem_map[page_table[fID][i].frame]--;
-				mem_shared--;
+				//mem_shared--;
 			}
 			page_table[ID][i].frame = 0;
 			page_table[ID][i].P = 0;
 			page_table[ID][i].V = 0;
 			page_table[ID][i].D = 0;
 		}
+		mem_shared -= min(share_table[ID].n_pages, MAX_RESIDENTS);
 		if (dr != -1)
 			share_table[dr].father = fID;
 		if (share_table[fID].dr_share != -1) {
